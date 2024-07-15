@@ -2,10 +2,12 @@ import os, sys
 from PyQt6.QtWidgets import QMainWindow, QApplication, QLabel, QListWidgetItem, QWidget, QGridLayout
 from PyQt6.QtGui import QIcon, QPixmap, QFont
 from PyQt6.QtCore import QSize, Qt
+from PyQt6 import QtGui
 from src.window.main_window import Ui_MainWindow
 from src.window.search_widget import SearchWidget
 
 
+CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.getcwd()
 
 
@@ -17,6 +19,14 @@ __all__ = [
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
+
+        stylesheet_path = os.path.join(CURRENT_PATH, "style.css")
+        with open(stylesheet_path, "r", encoding="utf-8") as f:
+            self.setStyleSheet(f.read())
+
+        window_icon_path = os.path.join(ROOT_PATH, "assets/icons/icon.ico")
+        app_icon = QtGui.QIcon(window_icon_path)
+        self.setWindowIcon(app_icon)
 
         self.init_widget_file_class()
 
@@ -43,7 +53,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.side_title_Button.setText("")
         self.side_title_Button.setIcon(QIcon(os.path.join(ROOT_PATH, "assets/icons/sidebar.svg")))
         self.side_title_Button.setFlat(True)
-        self.side_title_Button.setFixedSize(QSize(30, 40))
+        self.side_title_Button.setFixedSize(QSize(40, 40))
         self.side_title_Button.setContentsMargins(1, 1, 1, 1)
         self.side_title_Button.setCheckable(True)
         self.side_title_Button.setChecked(True)
@@ -82,13 +92,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         for item in self.side_menu_list:
             listWidgetIcon = QListWidgetItem()
             listWidgetIcon.setIcon(QIcon(item["icon"]))
-            listWidgetIcon.setSizeHint(QSize(30, 40))
+            listWidgetIcon.setSizeHint(QSize(40, 40))
             self.listWidget_icon.addItem(listWidgetIcon)
             self.listWidget_icon.setCurrentRow(0)
 
             listWidgetFull = QListWidgetItem()
             listWidgetFull.setText(item["name"])
-            listWidgetFull.setSizeHint(QSize(30, 40))
+            listWidgetFull.setSizeHint(QSize(40, 40))
             self.listWidget_full_option.addItem(listWidgetFull)
             self.listWidget_full_option.setCurrentRow(0)
 
