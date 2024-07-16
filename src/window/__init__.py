@@ -1,4 +1,5 @@
 import os, sys
+from random import choice
 from PyQt6.QtWidgets import QMainWindow, QApplication, QLabel, QListWidgetItem, QWidget, QGridLayout
 from PyQt6.QtGui import QIcon, QPixmap, QFont
 from PyQt6.QtCore import QSize, Qt
@@ -31,7 +32,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_widget_file_class()
 
         self.setupUi(self)
-        self.setWindowTitle("Anime管家")
+        self.setWindowTitle("YukiSearch")
 
         self.side_title_text.setText(" ")
         font = QFont('Arial', 16)
@@ -53,7 +54,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.side_title_Button.setText("")
         self.side_title_Button.setIcon(QIcon(os.path.join(ROOT_PATH, "assets/icons/sidebar.svg")))
         self.side_title_Button.setFlat(True)
-        self.side_title_Button.setFixedSize(QSize(40, 40))
+        self.side_title_Button.setFixedSize(QSize(42, 40))
         self.side_title_Button.setContentsMargins(1, 1, 1, 1)
         self.side_title_Button.setCheckable(True)
         self.side_title_Button.setChecked(True)
@@ -76,11 +77,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.side_title_Button.clicked.connect(self.side_title_text.setHidden)
         self.side_title_Button.clicked.connect(self.side_title_icon.setHidden)
         self.side_title_Button.clicked.connect(self.listWidget_icon.setVisible)
+        self.side_title_Button.clicked.connect(self.set_random_emoji_text)
 
         self.listWidget_full_option.currentRowChanged["int"].connect(self.stackedWidget.setCurrentIndex)
         self.listWidget_icon.currentRowChanged["int"].connect(self.stackedWidget.setCurrentIndex)
         self.listWidget_full_option.currentRowChanged["int"].connect(self.listWidget_icon.setCurrentRow)
         self.listWidget_icon.currentRowChanged["int"].connect(self.listWidget_full_option.setCurrentRow)
+
+    def set_random_emoji_text(self):
+        self.side_title_text.setText(choice([" ㅇㅅㅇ  ", "(｡･ω･｡)  "]))
 
     def init_side_menu_widgets(self):
         self.listWidget_icon.clear()
@@ -124,7 +129,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             },
             {
                 "name": "書籤",
-                "icon": os.path.join(ROOT_PATH, "assets/icons/bookmark.svg"),
+                "icon": os.path.join(ROOT_PATH, "assets/icons/datamanager.svg"),
                 "widget": self.search_widget
             },
             {

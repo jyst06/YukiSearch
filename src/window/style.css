@@ -1,0 +1,116 @@
+/* 樣式表: style.qss */
+
+/* 通用樣式 */
+QWidget {
+    background-color: #2e2e2e;
+    color: #ffffff;
+    font-family: Microsoft JhengHei;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+QScrollBar {
+    height: 0px;
+}
+
+#side_title_Button {
+    border: #333333;
+    border-radius: 12px; /* 圓邊 */
+    padding: 10px 20px;
+    font-size: 18px; /* 字體大小 */
+}
+
+/* 左側選單樣式 */
+QListWidget, QListView, QTreeView, QTabWidget::pane {
+    border: none;
+    background-color: #2e2e2e;
+    color: #ffffff;
+    font-size: 20px; /* 調整字體大小 */
+}
+
+/* 左側選單項目樣式 */
+QListWidget::item, QListView::item {
+    height: 40px;
+    padding: 10px;
+    border: none;
+}
+
+/* 左側選單選中項目樣式 */
+QListWidget::item:selected, QListView::item:selected {
+    background-color: #4CAF50; /* 選中項目的背景色 */
+    color: #ffffff;
+    border-radius: 8px; /* 圓邊 */
+    padding-left: 10px; /* 增加內邊距 */
+}
+
+/* 左側選單懸停項目樣式 */
+QListWidget::item:hover, QListView::item:hover {
+    background-color: #45a049;
+    color: #ffffff;
+    border-radius: 8px; /* 圓邊 */
+}
+
+/* 按鈕樣式 */
+QPushButton {
+    color: white;
+    border: 2px solid #4CAF50;
+    border-radius: 12px; /* 圓邊 */
+    padding: 10px 20px;
+    font-size: 18px; /* 字體大小 */
+}
+
+QPushButton:hover {
+    background-color: #45a049;
+    border: 2px solid #45a049;
+}
+
+QPushButton:pressed {
+    background-color: #3e8e41;
+    border: 2px solid #3e8e41;
+}
+
+/* 輸入框樣式 */
+QLineEdit {
+    color: black;
+    font-size: 20px;
+    background-color: white;
+    border: 2px solid #4CAF50;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+QLineEdit:focus {
+    border: 2px solid #45a049;
+}
+
+/* 下拉選單樣式 */
+QComboBox {
+    color: white;
+    border: 2px solid #4CAF50;
+    border-radius: 12px; /* 圓邊 */
+    padding: 10px 20px;
+    font-size: 18px; /* 字體大小 */
+    background-color: #2e2e2e;
+}
+
+QComboBox:hover {
+    background-color: #45a049;
+    border: 2px solid #45a049;
+}
+
+QComboBox::drop-down {
+    border: none;
+    border-radius: 12px;
+}
+
+QAbstractItemView {
+    border: 1px solid #2e2e2e;  /* 设置下拉框的边缘 */
+    border-radius: 12px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #2e2e2e;
+    border: 2px solid #4CAF50;
+    selection-background-color: #4CAF50; /* 選中項目的背景色 */
+    color: white;
+}

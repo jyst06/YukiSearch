@@ -6,7 +6,7 @@ CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 USER_AGENT_PATH = os.path.join(CURRENT_PATH, 'user_agents.txt')
 
 
-def generate() -> dict:
+def generate_user_agent() -> dict:
     with open(USER_AGENT_PATH, 'r') as file:
         user_agents = [line.strip() for line in file]
 

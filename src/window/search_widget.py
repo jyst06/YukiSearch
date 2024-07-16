@@ -1,14 +1,17 @@
 import sys
+import os
 import requests
 import webbrowser
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
-    QScrollArea, QLabel, QVBoxLayout
+    QScrollArea, QLabel, QVBoxLayout, QComboBox
 )
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 
 from src.api import Search
+
+CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class ResultBox(QWidget):
@@ -29,7 +32,9 @@ class ResultBox(QWidget):
         # Create name and source layout
         text_layout = QVBoxLayout()
         self.name_label = QLabel(name)
-        self.source_label = QLabel(source)
+        self.name_label.setStyleSheet("color: white; font-size: 25px; padding: 5px 5px; font-weight: bold;")
+        self.source_label = QLabel('來源 : '+source)
+        self.source_label.setStyleSheet("color: white; font-size: 18px; padding: 5px 5px;")
         text_layout.addWidget(self.name_label)
         text_layout.addWidget(self.source_label)
 
@@ -57,7 +62,8 @@ class ResultBox(QWidget):
             pixmap = QPixmap()
             pixmap.loadFromData(image_data)
             self.image_label.setPixmap(pixmap)
-            self.image_label.setFixedHeight(150)
+            self.image_label.setFixedHeight(170)
+            self.image_label.setFixedWidth(100)
 
         except requests.RequestException as e:
             print(f"Error downloading image: {e}")
@@ -70,6 +76,10 @@ class SearchWidget(QWidget):
         self.initUI()
 
     def initUI(self):
+        stylesheet_path = os.path.join(CURRENT_PATH, "style.css")
+        with open(stylesheet_path, "r", encoding="utf-8") as f:
+            self.setStyleSheet(f.read())
+
         self.setWindowTitle("搜尋範例")
         self.setGeometry(100, 100, 800, 600)
 
@@ -83,28 +93,19 @@ class SearchWidget(QWidget):
 
         self.search_input = QLineEdit(self)
         self.search_input.setFixedHeight(40)  # 增加高度
-        self.search_input.setStyleSheet("""
-            QLineEdit {
-                border: 2px solid #4CAF50;
-                padding: 5px;
-                border-radius: 10px;
-            }
-        """)
+
         self.search_button = QPushButton("搜尋", self)
         self.search_button.setFixedHeight(40)  # 增加高度
-        self.search_button.setStyleSheet("""
-            QPushButton {
-                padding: 10px;
-                border-radius: 10px;
-                border: 1px solid #ccc;
-                background-color: #87CEEB;  # 淺藍色背景
-            }
-            QPushButton:hover {
-                background-color: #00BFFF;  # 深藍色背景
-            }
-        """)
         self.search_button.clicked.connect(self.search)
+
+        # 下拉選單
+        self.site_selector = QComboBox(self)
+        self.site_selector.addItems(["全部", "動畫瘋", "囧次元", "Anime1", "櫻花"])
+        self.site_selector.setFixedHeight(40)  # 增加高度
+        self.site_selector.setFixedWidth(125)
+
         search_layout.addWidget(self.search_input)
+        search_layout.addWidget(self.site_selector)
         search_layout.addWidget(self.search_button)
 
         # 結果區域
@@ -125,13 +126,22 @@ class SearchWidget(QWidget):
     def search(self):
         results = []
         # Clean old results
-        for i in reversed(range(self.result_layout.count() - 1)):  # exclude the stretch
+        for i in reversed(range(self.result_layout.count() - 1)):
             widget_to_remove = self.result_layout.itemAt(i).widget()
             self.result_layout.removeWidget(widget_to_remove)
             widget_to_remove.setParent(None)
 
+        selected_site = self.site_selector.currentText()
+        sites = {
+            "全部": ["ani_gamer", "囧次元", "anime1", "櫻花"],  # 這裡替換成實際的站點名稱
+            "動畫瘋": ["ani_gamer"],
+            "囧次元": ["囧次元"],
+            "Anime1": ["site3"],
+            "櫻花": ["site4"]
+        }
+
         try:
-            for site in ["ani_gamer"]:
+            for site in sites[selected_site]:
                 search = Search(self.search_input.text(), site)
                 search_results = search()
 
@@ -140,15 +150,17 @@ class SearchWidget(QWidget):
                     return
 
                 for index in search_results:
-                    results.append({"image": search_results[index]['image_url'], "name": search_results[index]['ani_name'],
-                                    "source": search_results[index]['source'], "ani_url": search_results[index]['ani_url']})
+                    results.append(
+                        {"image": search_results[index]['image_url'], "name": search_results[index]['ani_name'],
+                         "source": search_results[index]['source'], "ani_url": search_results[index]['ani_url']})
         except Exception as e:
             print(f"Error during search: {e}")
 
         try:
             for result in results:
                 custom_widget = ResultBox(result["image"], result["name"], result["source"], result["ani_url"])
-                self.result_layout.insertWidget(self.result_layout.count() - 1, custom_widget)  # Insert before the stretch
+                self.result_layout.insertWidget(self.result_layout.count() - 1,
+                                                custom_widget)  # Insert before the stretch
         except Exception as e:
             print(f"Error adding result widgets: {e}")
 
@@ -156,9 +168,9 @@ class SearchWidget(QWidget):
         no_results_label = QLabel("無搜尋結果")
         self.result_layout.insertWidget(self.result_layout.count() - 1, no_results_label)
 
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     search_widget = SearchWidget()
     search_widget.show()
     sys.exit(app.exec())
-
