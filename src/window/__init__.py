@@ -128,8 +128,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 "widget": self.search_widget
             },
             {
-                "name": "書籤",
-                "icon": os.path.join(ROOT_PATH, "assets/icons/datamanager.svg"),
+                "name": "收藏",
+                "icon": os.path.join(ROOT_PATH, "assets/icons/bookmark.svg"),
                 "widget": self.search_widget
             },
             {

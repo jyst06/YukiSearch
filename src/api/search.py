@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from src.api.utils import generate_user_agent
 from src.api.utils import chinese_traditional_to_simplified
 from src.api.utils import read_search_apis, read_video_apis
+from src.datamanager.utils import generate_id
 
 
 class Search:
@@ -49,7 +50,13 @@ class Search:
         self.headers = generate_user_agent()
         self.site_name = site_name
         self.site_name_ch = self.allow_sites[site_name]["ch_name"]
-        self.template_format = {"ani_name": "", "image_url": "", "source": self.site_name_ch, "ani_url": "", "episodes": 0}
+        self.template_format = {
+            "id": "",
+            "ani_name": "",
+            "image_url": "",
+            "source": self.site_name_ch,
+            "ani_url": ""
+        }
 
     def get_html(self) -> str:
         response = requests.get(self.url, headers=self.headers)
@@ -60,26 +67,56 @@ class Search:
         else:
             raise Exception(f"Error: {response.status_code}")
 
-    def parse_html(self, html) -> dict | None:
-        if self.site_name == "ani_gamer":
-            result_dict = {}
-            soup = BeautifulSoup(html, 'html.parser')
+    from bs4 import BeautifulSoup
 
-            ani_name = soup.find_all('p', class_='theme-name')
-            ani_url = soup.find_all('a', class_='theme-list-main')
-            image_url = soup.find_all('img', class_='theme-img lazyload')
+    def parse_html(self, html) -> dict | None:
+        def format_template(site_name, index) -> None:
+            self.template_format["id"] = generate_id(ani_name[index] + self.site_name_ch)
+            self.template_format["ani_name"] = ani_name[index]
+            self.template_format["image_url"] = image_url[index]
+            self.template_format["ani_url"] = self.video_apis[site_name].format(url=ani_url[index])
+
+            result_dict[index] = self.template_format.copy()
+
+        result_dict = {}
+        ani_url = []
+        ani_name = []
+        image_url = []
+
+        soup = BeautifulSoup(html, 'html.parser')
+
+        if self.site_name == "ani_gamer":
+            names = soup.find_all('p', class_='theme-name')
+            urls = soup.find_all('a', class_='theme-list-main')
+            images = soup.find_all('img', class_='theme-img lazyload')
+
+            for name, url, img in zip(names, urls, images):
+                ani_name.append(name.text.strip())
+                ani_url.append(url['href'])
+                image_url.append(img['data-src'])
 
             if not ani_name:
                 return None
 
-            for index, img in enumerate(image_url):
-                self.template_format["ani_name"] = ani_name[index].text.strip()
-                self.template_format["image_url"] = img['data-src']
-                self.template_format["ani_url"] = self.video_apis["ani_gamer"].format(url=ani_url[index]['href'])
+            for index in range(len(ani_name)):
+                format_template("ani_gamer", index)
 
-                result_dict[index] = self.template_format.copy()
+        elif self.site_name == "nineciyuan":
+            h3 = soup.find_all('h3')
+            div = soup.find_all('div', class_="img-wrapper lazyload img-wrapper-pic")
 
-            return result_dict
+            for h3_item, div_item in zip(h3, div):
+                ani_url.append(h3_item.find('a')['href'])
+                ani_name.append(h3_item.find('a')['title'].strip())
+                image_url.append(div_item['data-original'])
+
+            if not ani_name:
+                return None
+
+            for index in range(len(ani_name)):
+                format_template("nineciyuan", index)
+
+        return result_dict
 
     def __call__(self) -> dict | None:
         """
@@ -89,5 +126,7 @@ class Search:
 
 
 if __name__ == '__main__':
-    search = Search("青春", "ani_gamer")
-    print(search())
+    ani_gamer = Search("青春豬", "ani_gamer")
+    print(ani_gamer())
+    nineciyuan = Search("青春豬", "nineciyuan")
+    print(nineciyuan())

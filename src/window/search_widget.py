@@ -133,11 +133,11 @@ class SearchWidget(QWidget):
 
         selected_site = self.site_selector.currentText()
         sites = {
-            "全部": ["ani_gamer", "囧次元", "anime1", "櫻花"],  # 這裡替換成實際的站點名稱
+            "全部": ["ani_gamer", "nineciyuan", "anime1", "sakura"],  # 這裡替換成實際的站點名稱
             "動畫瘋": ["ani_gamer"],
-            "囧次元": ["囧次元"],
-            "Anime1": ["site3"],
-            "櫻花": ["site4"]
+            "囧次元": ["nineciyuan"],
+            "Anime1": ["anime1"],
+            "櫻花": ["sakura"]
         }
 
         try:
