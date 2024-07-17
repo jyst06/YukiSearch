@@ -1,9 +1,14 @@
 import requests
+import re
+import os
 from bs4 import BeautifulSoup
 from src.api.utils import generate_user_agent
 from src.api.utils import chinese_traditional_to_simplified
 from src.api.utils import read_search_apis, read_video_apis
 from src.datamanager.utils import generate_id
+
+
+NA_PIC_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\assets\pics\na.jpg"#os.path.join(os.getcwd(), "assets/pics/na.jpg")
 
 
 class Search:
@@ -70,11 +75,23 @@ class Search:
     from bs4 import BeautifulSoup
 
     def parse_html(self, html) -> dict | None:
+        def remove_brackets(text) -> str:
+            cleaned_text = re.sub(r'\[.*?\]', '', text)
+            return cleaned_text.strip()
+
         def format_template(site_name, index) -> None:
             self.template_format["id"] = generate_id(ani_name[index] + self.site_name_ch)
             self.template_format["ani_name"] = ani_name[index]
-            self.template_format["image_url"] = image_url[index]
-            self.template_format["ani_url"] = self.video_apis[site_name].format(url=ani_url[index])
+
+            if image_url:
+                self.template_format["image_url"] = image_url[index]
+            else:
+                self.template_format["image_url"] = NA_PIC_PATH
+
+            if self.video_apis[site_name]:
+                self.template_format["ani_url"] = self.video_apis[site_name].format(url=ani_url[index])
+            else:
+                self.template_format["ani_url"] = ani_url[index]
 
             result_dict[index] = self.template_format.copy()
 
@@ -84,7 +101,7 @@ class Search:
         image_url = []
 
         soup = BeautifulSoup(html, 'html.parser')
-
+        # ------------------------動畫瘋------------------------
         if self.site_name == "ani_gamer":
             names = soup.find_all('p', class_='theme-name')
             urls = soup.find_all('a', class_='theme-list-main')
@@ -100,7 +117,7 @@ class Search:
 
             for index in range(len(ani_name)):
                 format_template("ani_gamer", index)
-
+        # ------------------------囧次元------------------------
         elif self.site_name == "nineciyuan":
             h3 = soup.find_all('h3')
             div = soup.find_all('div', class_="img-wrapper lazyload img-wrapper-pic")
@@ -115,6 +132,28 @@ class Search:
 
             for index in range(len(ani_name)):
                 format_template("nineciyuan", index)
+        # ------------------------anime1------------------------
+        elif self.site_name == "anime1":
+            url = soup.find_all('a', rel="category tag")
+            name = soup.find_all('a', rel="bookmark")
+
+            for item in url:
+                href = item['href']
+                if href not in ani_url:
+                    ani_url.append(href)
+
+            for item in name:
+                if item.find('time'):
+                    continue
+                n = remove_brackets(item.text)
+                if n not in ani_name:
+                    ani_name.append(n)
+
+            if not ani_name:
+                return None
+
+            for index in range(len(ani_url)):
+                format_template("anime1", index)
 
         return result_dict
 
@@ -130,3 +169,5 @@ if __name__ == '__main__':
     print(ani_gamer())
     nineciyuan = Search("青春豬", "nineciyuan")
     print(nineciyuan())
+    anime1 = Search("2.5次元", "anime1")
+    print(anime1())

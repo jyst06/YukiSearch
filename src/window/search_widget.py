@@ -54,19 +54,27 @@ class ResultBox(QWidget):
         # Set layout to this widget
         self.setLayout(main_layout)
 
-    def load_image(self, url):
+    def load_image(self, source):
         try:
-            response = requests.get(url)
-            response.raise_for_status()
-            image_data = response.content
-            pixmap = QPixmap()
-            pixmap.loadFromData(image_data)
+            if os.path.isfile(source):  # 檢查是否為本地文件
+                pixmap = QPixmap(source)
+                if pixmap.isNull():
+                    raise ValueError(f"Error loading local image: {source}")
+                print(f"Loaded local image: {source}")
+            else:  # 假設是從網路上讀取的
+                response = requests.get(source)
+                response.raise_for_status()
+                image_data = response.content
+                pixmap = QPixmap()
+                pixmap.loadFromData(image_data)
+                print(f"Loaded image from URL: {source}")
+
             self.image_label.setPixmap(pixmap)
             self.image_label.setFixedHeight(170)
             self.image_label.setFixedWidth(100)
 
-        except requests.RequestException as e:
-            print(f"Error downloading image: {e}")
+        except (requests.RequestException, ValueError, Exception) as e:
+            print(f"Error loading image: {e}")
 
 
 class SearchWidget(QWidget):
@@ -140,14 +148,16 @@ class SearchWidget(QWidget):
             "櫻花": ["sakura"]
         }
 
+        flag = False
         try:
             for site in sites[selected_site]:
                 search = Search(self.search_input.text(), site)
                 search_results = search()
 
                 if search_results is None or len(search_results) == 0:
-                    self.display_no_results()
-                    return
+                    continue
+                else:
+                    flag = True
 
                 for index in search_results:
                     results.append(
@@ -155,6 +165,10 @@ class SearchWidget(QWidget):
                          "source": search_results[index]['source'], "ani_url": search_results[index]['ani_url']})
         except Exception as e:
             print(f"Error during search: {e}")
+
+        if not flag:
+            self.display_no_results()
+            return
 
         try:
             for result in results:

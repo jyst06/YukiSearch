@@ -123,6 +123,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 "widget": self.search_widget
             },
             {
+                "name": "搜尋",
+                "icon": os.path.join(ROOT_PATH, "assets/icons/search.svg"),
+                "widget": self.search_widget
+            },
+            {
                 "name": "篩選",
                 "icon": os.path.join(ROOT_PATH, "assets/icons/filter.svg"),
                 "widget": self.search_widget
