@@ -11,7 +11,9 @@ from PyQt6.QtCore import Qt
 
 from src.api import Search
 
+
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+NA_PIC_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\assets\pics\na.jpg"#os.path.join(os.getcwd(), "assets/pics/na.jpg")
 
 
 class ResultBox(QWidget):
@@ -75,6 +77,10 @@ class ResultBox(QWidget):
 
         except (requests.RequestException, ValueError, Exception) as e:
             print(f"Error loading image: {e}")
+            pixmap = QPixmap(NA_PIC_PATH)
+            self.image_label.setPixmap(pixmap)
+            self.image_label.setFixedHeight(170)
+            self.image_label.setFixedWidth(100)
 
 
 class SearchWidget(QWidget):

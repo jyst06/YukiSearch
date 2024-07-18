@@ -1,21 +1,34 @@
-import os, sys
+import os
+import sys
 from random import choice
-from PyQt6.QtWidgets import QMainWindow, QApplication, QLabel, QListWidgetItem, QWidget, QGridLayout
+from PyQt6.QtWidgets import QMainWindow, QApplication, QListWidgetItem, QWidget, QVBoxLayout
 from PyQt6.QtGui import QIcon, QPixmap, QFont
-from PyQt6.QtCore import QSize, Qt, pyqtSignal
-from PyQt6 import QtGui
+from PyQt6.QtCore import QSize, Qt, pyqtSignal, QThread
+
 from src.window.main_window import Ui_MainWindow
 from src.window.search_widget import SearchWidget
 from src.window.home_widget import HomeWidget
-
+from src.window.notification_box_widget import Notification
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.getcwd()
 
+__all__ = ["show_main_window"]
 
-__all__ = [
-    "show_main_window"
-]
+class SearchThread(QThread):
+    searchCompleted = pyqtSignal(str)
+
+    def __init__(self, parent=None, search_query=""):
+        super().__init__(parent)
+        self.search_query = search_query
+
+    def run(self):
+        # Simulate search operation
+        import time
+        time.sleep(2)  # Replace with actual search logic
+
+        # Emit signal with search result
+        self.searchCompleted.emit(self.search_query)
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -27,8 +40,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.setStyleSheet(f.read())
 
         window_icon_path = os.path.join(ROOT_PATH, "assets/icons/icon.ico")
-        app_icon = QtGui.QIcon(window_icon_path)
-        self.setWindowIcon(app_icon)
+        self.setWindowIcon(QIcon(window_icon_path))
 
         self.init_widget_file_class()
 
@@ -70,6 +82,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def init_widget_file_class(self):
         self.search_widget = SearchWidget()
         self.home_widget = HomeWidget()
+        self.notification_box = Notification(self)
 
     def init_signal_slots(self):
         self.side_title_text.setHidden(True)
@@ -77,16 +90,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.listWidget_full_option.setHidden(True)
         self.listWidget_icon.setVisible(True)
 
-        self.side_title_Button.clicked.connect(self.listWidget_full_option.setHidden)
-        self.side_title_Button.clicked.connect(self.side_title_text.setHidden)
-        self.side_title_Button.clicked.connect(self.side_title_icon.setHidden)
-        self.side_title_Button.clicked.connect(self.listWidget_icon.setVisible)
-        self.side_title_Button.clicked.connect(self.set_random_emoji_text)
-
+        self.side_title_Button.clicked.connect(self.toggle_side_menu_visibility)
         self.listWidget_full_option.currentRowChanged["int"].connect(self.stackedWidget.setCurrentIndex)
         self.listWidget_icon.currentRowChanged["int"].connect(self.stackedWidget.setCurrentIndex)
         self.listWidget_full_option.currentRowChanged["int"].connect(self.listWidget_icon.setCurrentRow)
         self.listWidget_icon.currentRowChanged["int"].connect(self.listWidget_full_option.setCurrentRow)
+
+    def toggle_side_menu_visibility(self):
+        self.side_title_text.setHidden(not self.side_title_text.isHidden())
+        self.side_title_icon.setHidden(not self.side_title_icon.isHidden())
+        self.listWidget_full_option.setHidden(not self.listWidget_full_option.isHidden())
+        self.listWidget_icon.setVisible(not self.listWidget_icon.isVisible())
+
+        if self.side_title_text.isHidden():
+            self.set_random_emoji_text()
 
     def set_random_emoji_text(self):
         self.side_title_text.setText(choice([" ㅇㅅㅇ  ", "(｡･ω･｡)  "]))
@@ -154,6 +171,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         ]
 
     def switch_to_search_and_execute(self, search_query):
+        self.notification_box.show_notification("提示", "正在搜尋...", font_color="green")
+
+        # Create and start search thread
+        self.search_thread = SearchThread(search_query=search_query)
+        self.search_thread.searchCompleted.connect(self.search_completed)
+        self.search_thread.start()
+
+    def search_completed(self, search_query):
         search_page_index = next(i for i, item in enumerate(self.side_menu_list) if item["name"] == "搜尋")
         self.stackedWidget.setCurrentIndex(search_page_index)
         self.listWidget_full_option.setCurrentRow(search_page_index)

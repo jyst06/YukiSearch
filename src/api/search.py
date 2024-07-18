@@ -82,7 +82,7 @@ class Search:
             self.template_format["id"] = generate_id(ani_name[index] + self.site_name_ch)  # 生成id
             self.template_format["ani_name"] = ani_name[index]
 
-            if image_url:  # 圖片沒有連結 -> 使用N/A圖片
+            if image_url and "down" not in image_url:  # 圖片沒有連結/或是存在download關鍵字 -> 使用N/A圖片
                 self.template_format["image_url"] = image_url[index]
             else:
                 self.template_format["image_url"] = NA_PIC_PATH
