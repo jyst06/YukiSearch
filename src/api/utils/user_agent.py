@@ -21,4 +21,4 @@ def generate_user_agent() -> dict:
 
 if __name__ == '__main__':
     print(USER_AGENT_PATH)
-    print(generate())
+    print(generate_user_agent())

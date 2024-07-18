@@ -2,10 +2,11 @@ import os, sys
 from random import choice
 from PyQt6.QtWidgets import QMainWindow, QApplication, QLabel, QListWidgetItem, QWidget, QGridLayout
 from PyQt6.QtGui import QIcon, QPixmap, QFont
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QSize, Qt, pyqtSignal
 from PyQt6 import QtGui
 from src.window.main_window import Ui_MainWindow
 from src.window.search_widget import SearchWidget
+from src.window.home_widget import HomeWidget
 
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -64,8 +65,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_side_menu_widgets()
         self.init_stack_widgets()
 
+        self.home_widget.searchSignal.connect(self.switch_to_search_and_execute)
+
     def init_widget_file_class(self):
         self.search_widget = SearchWidget()
+        self.home_widget = HomeWidget()
 
     def init_signal_slots(self):
         self.side_title_text.setHidden(True)
@@ -120,7 +124,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             {
                 "name": "主頁",
                 "icon": os.path.join(ROOT_PATH, "assets/icons/home.svg"),
-                "widget": self.search_widget
+                "widget": self.home_widget
             },
             {
                 "name": "搜尋",
@@ -148,6 +152,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 "widget": self.search_widget
             }
         ]
+
+    def switch_to_search_and_execute(self, search_query):
+        search_page_index = next(i for i, item in enumerate(self.side_menu_list) if item["name"] == "搜尋")
+        self.stackedWidget.setCurrentIndex(search_page_index)
+        self.listWidget_full_option.setCurrentRow(search_page_index)
+        self.listWidget_icon.setCurrentRow(search_page_index)
+
+        self.search_widget.search_input.setText(search_query)
+        self.search_widget.search()
 
 
 def show_main_window():

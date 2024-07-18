@@ -3,7 +3,7 @@ import re
 import os
 from bs4 import BeautifulSoup
 from src.api.utils import generate_user_agent
-from src.api.utils import chinese_traditional_to_simplified
+from src.api.utils import chinese_traditional_to_simplified, chinese_simplified_to_traditional
 from src.api.utils import read_search_apis, read_video_apis
 from src.datamanager.utils import generate_id
 
@@ -34,7 +34,7 @@ class Search:
             },
             "anime1": {
                 "search_url": self.search_apis["anime1"],
-                "ch_name": "anime1",
+                "ch_name": "Anime1",
                 "lang": "zh-TW"
             },
             "sakura": {
@@ -48,7 +48,7 @@ class Search:
             raise ValueError('(Search) site_name must be in ["ani_gamer", "nineciyuan", "anime1", "sakura"]')
 
         if self.allow_sites[site_name]["lang"] == "zh-TW":
-            self.url = self.allow_sites[site_name]["search_url"].format(name=ani_name)
+            self.url = self.allow_sites[site_name]["search_url"].format(name=chinese_simplified_to_traditional(ani_name))
         elif self.allow_sites[site_name]["lang"] == "zh-CN":
             self.url = self.allow_sites[site_name]["search_url"].format(name=chinese_traditional_to_simplified(ani_name))
 
@@ -72,29 +72,28 @@ class Search:
         else:
             raise Exception(f"Error: {response.status_code}")
 
-    from bs4 import BeautifulSoup
-
     def parse_html(self, html) -> dict | None:
+        # ------------------------內部function------------------------
         def remove_brackets(text) -> str:
             cleaned_text = re.sub(r'\[.*?\]', '', text)
             return cleaned_text.strip()
 
         def format_template(site_name, index) -> None:
-            self.template_format["id"] = generate_id(ani_name[index] + self.site_name_ch)
+            self.template_format["id"] = generate_id(ani_name[index] + self.site_name_ch)  # 生成id
             self.template_format["ani_name"] = ani_name[index]
 
-            if image_url:
+            if image_url:  # 圖片沒有連結 -> 使用N/A圖片
                 self.template_format["image_url"] = image_url[index]
             else:
                 self.template_format["image_url"] = NA_PIC_PATH
 
-            if self.video_apis[site_name]:
+            if self.video_apis[site_name]:  # 沒有影片api -> 直接使用連結
                 self.template_format["ani_url"] = self.video_apis[site_name].format(url=ani_url[index])
             else:
                 self.template_format["ani_url"] = ani_url[index]
 
             result_dict[index] = self.template_format.copy()
-
+        # ------------------------初始化------------------------
         result_dict = {}
         ani_url = []
         ani_name = []
@@ -154,7 +153,25 @@ class Search:
 
             for index in range(len(ani_url)):
                 format_template("anime1", index)
+        # ------------------------櫻花------------------------
+        elif self.site_name == "sakura":
+            a = soup.find_all('a', target='_self')
+            img = soup.find_all('img', class_="float-left mr-3")
 
+            for url in a:
+                if url['href'] not in ani_url and "vod" in url['href']:
+                    ani_url.append(url['href'])
+
+            for item in img:
+                image_url.append("https://yhdm.one" + item['src'])
+                ani_name.append(item['alt'].strip())
+
+            if not ani_name:
+                return None
+
+            for index in range(len(ani_name)):
+                format_template("sakura", index)
+        # ---------------------------------------------------
         return result_dict
 
     def __call__(self) -> dict | None:
@@ -165,9 +182,11 @@ class Search:
 
 
 if __name__ == '__main__':
-    ani_gamer = Search("青春豬", "ani_gamer")
-    print(ani_gamer())
-    nineciyuan = Search("青春豬", "nineciyuan")
-    print(nineciyuan())
-    anime1 = Search("2.5次元", "anime1")
-    print(anime1())
+    # ani_gamer = Search("青春豬", "ani_gamer")
+    # print(ani_gamer())
+    # nineciyuan = Search("青春豬", "nineciyuan")
+    # print(nineciyuan())
+    # anime1 = Search("2.5次元", "anime1")
+    # print(anime1())
+    sakura = Search("2.5", "sakura")
+    print(sakura())
