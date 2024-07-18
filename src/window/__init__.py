@@ -1,9 +1,10 @@
 import os
 import sys
 from random import choice
-from PyQt6.QtWidgets import QMainWindow, QApplication, QListWidgetItem, QWidget, QVBoxLayout, QLabel
+from PyQt6.QtWidgets import QMainWindow, QApplication, QListWidgetItem, QWidget, QVBoxLayout, QLabel, QSplashScreen, \
+    QProgressBar
 from PyQt6.QtGui import QIcon, QPixmap, QFont
-from PyQt6.QtCore import QSize, Qt, pyqtSignal, QThread
+from PyQt6.QtCore import QSize, Qt, pyqtSignal, QThread, QTimer
 
 from src.window.main_window import Ui_MainWindow
 from src.window.search_widget import SearchWidget
@@ -13,7 +14,46 @@ from src.window.notification_box_widget import Notification
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.getcwd()
 
-__all__ = ["show_main_window"]
+
+class LoadingScreen(QSplashScreen):
+    def __init__(self, image_path):
+        super().__init__()
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
+
+        # 載入自訂圖片
+        pixmap = QPixmap(image_path)
+        if pixmap.isNull():
+            print(f"警告: 無法載入圖片 {image_path}")
+            pixmap = QPixmap(400, 200)  # 創建一個空白的 pixmap 作為後備
+            pixmap.fill(Qt.GlobalColor.white)  # 填充為白色背景
+        else:
+            pixmap = pixmap.scaled(400, 200, Qt.AspectRatioMode.KeepAspectRatio,
+                                   Qt.TransformationMode.SmoothTransformation)
+
+        self.setPixmap(pixmap)
+
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setGeometry(0, self.height() - 50, self.width(), 20)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 2px solid grey;
+                border-radius: 5px;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: #4CAF50;
+                width: 10px;
+                margin: 1px;
+            }
+        """)
+
+    def progress(self):
+        current_value = self.progress_bar.value()
+        if current_value < 100:
+            self.progress_bar.setValue(current_value + 1)
+        else:
+            self.close()
+
 
 class SearchThread(QThread):
     searchCompleted = pyqtSignal(str)
@@ -30,6 +70,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
 
+        # 使用自訂的加載圖片
+        loading_image_path = os.path.join(ROOT_PATH, "assets/pics/img.png")
+        self.loading_screen = LoadingScreen(loading_image_path)
+        self.loading_screen.show()
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.initialize_app)
+        self.timer.start(30)  # 每30毫秒更新一次加載進度
+
+    def initialize_app(self):
+        if self.loading_screen.progress_bar.value() >= 100:
+            self.timer.stop()
+            self.loading_screen.close()
+            self.show()
+        else:
+            self.loading_screen.progress()
+            if self.loading_screen.progress_bar.value() == 30:
+                self.init_widget_file_class()
+            elif self.loading_screen.progress_bar.value() == 80:
+                self.complete_initialization()
+
+    def init_widget_file_class(self):
+        self.search_widget = SearchWidget()
+        self.home_widget = HomeWidget()
+        self.notification_box = Notification(self)
+
+    def complete_initialization(self):
         stylesheet_path = os.path.join(CURRENT_PATH, "style.css")
         with open(stylesheet_path, "r", encoding="utf-8") as f:
             self.setStyleSheet(f.read())
@@ -37,11 +104,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         window_icon_path = os.path.join(ROOT_PATH, "assets/icons/icon.ico")
         self.setWindowIcon(QIcon(window_icon_path))
 
-        self.init_widget_file_class()
-
         self.setupUi(self)
         self.setWindowTitle("YukiSearch")
 
+        self.setup_ui_elements()
+        self.init_side_menu_items()
+        self.init_signal_slots()
+        self.init_side_menu_widgets()
+        self.init_stack_widgets()
+
+        self.home_widget.searchSignal.connect(self.switch_to_search_and_execute)
+
+    def setup_ui_elements(self):
         self.side_title_text.setText(" ")
         font = QFont('Arial', 16)
         font.setBold(True)
@@ -66,18 +140,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.side_title_Button.setContentsMargins(1, 1, 1, 1)
         self.side_title_Button.setCheckable(True)
         self.side_title_Button.setChecked(True)
-
-        self.init_side_menu_items()
-        self.init_signal_slots()
-        self.init_side_menu_widgets()
-        self.init_stack_widgets()
-
-        self.home_widget.searchSignal.connect(self.switch_to_search_and_execute)
-
-    def init_widget_file_class(self):
-        self.search_widget = SearchWidget()
-        self.home_widget = HomeWidget()
-        self.notification_box = Notification(self)
 
     def init_signal_slots(self):
         self.side_title_text.setHidden(True)
@@ -186,7 +248,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 def show_main_window():
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.show()
     sys.exit(app.exec())
 
 
