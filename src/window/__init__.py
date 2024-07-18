@@ -1,7 +1,7 @@
 import os
 import sys
 from random import choice
-from PyQt6.QtWidgets import QMainWindow, QApplication, QListWidgetItem, QWidget, QVBoxLayout
+from PyQt6.QtWidgets import QMainWindow, QApplication, QListWidgetItem, QWidget, QVBoxLayout, QLabel
 from PyQt6.QtGui import QIcon, QPixmap, QFont
 from PyQt6.QtCore import QSize, Qt, pyqtSignal, QThread
 
@@ -23,11 +23,6 @@ class SearchThread(QThread):
         self.search_query = search_query
 
     def run(self):
-        # Simulate search operation
-        import time
-        time.sleep(2)  # Replace with actual search logic
-
-        # Emit signal with search result
         self.searchCompleted.emit(self.search_query)
 
 
@@ -151,22 +146,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             {
                 "name": "篩選",
                 "icon": os.path.join(ROOT_PATH, "assets/icons/filter.svg"),
-                "widget": self.search_widget
+                "widget": QLabel("篩選 Coming soon")
             },
             {
                 "name": "收藏",
                 "icon": os.path.join(ROOT_PATH, "assets/icons/bookmark.svg"),
-                "widget": self.search_widget
+                "widget": QLabel("收藏 Coming soon")
             },
             {
                 "name": "紀錄",
                 "icon": os.path.join(ROOT_PATH, "assets/icons/clock.svg"),
-                "widget": self.search_widget
+                "widget": QLabel("紀錄 Coming soon")
             },
             {
                 "name": "設定",
                 "icon": os.path.join(ROOT_PATH, "assets/icons/settings.svg"),
-                "widget": self.search_widget
+                "widget": QLabel("設定 Coming soon")
             }
         ]
 
