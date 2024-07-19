@@ -11,6 +11,7 @@ from src.window.search_widget import SearchWidget
 from src.window.home_widget import HomeWidget
 from src.window.notification_box_widget import Notification
 
+
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.getcwd()
 

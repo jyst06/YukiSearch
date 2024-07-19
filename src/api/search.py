@@ -176,7 +176,7 @@ class Search:
 
     def __call__(self) -> dict | None:
         """
-        :return: {index: {"ani_name": "", "source": "", "image_url": "", "ani_url": ""}, ...n} or None
+        :return: {index: {"id": "", "ani_name": "", "source": "", "image_url": "", "ani_url": ""}, ...n} or None
         """
         return self.parse_html(self.get_html())
 

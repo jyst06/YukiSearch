@@ -147,7 +147,7 @@ class SearchWidget(QWidget):
 
         selected_site = self.site_selector.currentText()
         sites = {
-            "全部": ["ani_gamer", "nineciyuan", "anime1", "sakura"],  # 這裡替換成實際的站點名稱
+            "全部": ["ani_gamer", "nineciyuan", "anime1", "sakura"],
             "動畫瘋": ["ani_gamer"],
             "囧次元": ["nineciyuan"],
             "Anime1": ["anime1"],
@@ -180,7 +180,7 @@ class SearchWidget(QWidget):
             for result in results:
                 custom_widget = ResultBox(result["image"], result["name"], result["source"], result["ani_url"])
                 self.result_layout.insertWidget(self.result_layout.count() - 1,
-                                                custom_widget)  # Insert before the stretch
+                                                custom_widget)
         except Exception as e:
             print(f"Error adding result widgets: {e}")
 

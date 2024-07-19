@@ -2,6 +2,7 @@ import sys
 from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QMainWindow, QPushButton
 from PyQt6.QtCore import Qt, QTimer
 
+
 class Notification(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -69,6 +70,7 @@ class MainWindow(QMainWindow):
 
     def show_notification(self):
         self.notification.show_notification("警告", "已新增過此部動漫", font_color="red", duration=3000)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
