@@ -15,6 +15,7 @@ from src.window.bookmark_widget import BookMarkWidget
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.getcwd()
+STYLESHEET_PATH = os.path.join(CURRENT_PATH, "style.css")
 
 
 class LoadingScreen(QSplashScreen):
@@ -72,14 +73,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
 
-        # 使用自訂的加載圖片
+        # 加載時的背景圖片
         loading_image_path = os.path.join(ROOT_PATH, "assets/pics/img.png")
         self.loading_screen = LoadingScreen(loading_image_path)
         self.loading_screen.show()
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.initialize_app)
-        self.timer.start(30)  # 每30毫秒更新一次加載進度
+        self.timer.start(30)
 
     def initialize_app(self):
         if self.loading_screen.progress_bar.value() >= 100:
@@ -100,8 +101,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.bookmark_widget = BookMarkWidget()
 
     def complete_initialization(self):
-        stylesheet_path = os.path.join(CURRENT_PATH, "style.css")
-        with open(stylesheet_path, "r", encoding="utf-8") as f:
+        with open(STYLESHEET_PATH, "r", encoding="utf-8") as f:
             self.setStyleSheet(f.read())
 
         window_icon_path = os.path.join(ROOT_PATH, "assets/icons/icon.ico")
@@ -117,6 +117,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_stack_widgets()
 
         self.home_widget.searchSignal.connect(self.switch_to_search_and_execute)
+        self.stackedWidget.currentChanged.connect(self.on_page_changed)
 
     def setup_ui_elements(self):
         self.side_title_text.setText(" ")
@@ -231,7 +232,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         ]
 
     def switch_to_search_and_execute(self, search_query):
-        self.notification_box.show_notification("提示", "正在搜尋...", font_color="green", duration=500)
+        self.notification_box.show_notification("提示", "正在跳轉搜尋...", font_color="green", duration=500)
 
         # Create and start search thread
         self.search_thread = SearchThread(search_query=search_query)
@@ -246,6 +247,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.search_widget.search_input.setText(search_query)
         self.search_widget.search()
+
+    def on_page_changed(self, index):
+        current_widget = self.stackedWidget.widget(index)
+        if current_widget == self.bookmark_widget:
+            self.bookmark_widget.load_bookmarks()
 
 
 def show_main_window():

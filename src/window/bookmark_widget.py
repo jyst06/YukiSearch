@@ -1,10 +1,14 @@
 import sys, os
+import webbrowser
 import requests
 import requests_cache
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
                              QLabel, QPushButton, QComboBox, QScrollArea, QGridLayout, QSpacerItem, QSizePolicy)
-from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtCore import Qt, QSize, pyqtSignal
 from PyQt6.QtGui import QPixmap
+
+from src.datamanager import BookMark
+from src.datamanager import History
 
 
 ROOT_PATH = os.getcwd()
@@ -18,6 +22,8 @@ requests_cache.install_cache(CACHE_PATH, backend='sqlite', expire_after=2592000)
 
 
 class BookMarkBox(QWidget):
+    bookmark_remove_signal = pyqtSignal(bool)
+
     def __init__(self, **kwargs):
         """
         書籤物件區塊
@@ -32,6 +38,8 @@ class BookMarkBox(QWidget):
             image_url (str): 封面圖 URL
         """
         super().__init__()
+
+        self.bookmark = BookMark()
 
         self.id = kwargs.get("id")
         self.image_url = kwargs.get("image_url")
@@ -48,8 +56,8 @@ class BookMarkBox(QWidget):
             self.setStyleSheet(f.read())
 
         layout = QHBoxLayout()
-        layout.setContentsMargins(10, 10, 10, 10)  # 设置外边距
-        layout.setSpacing(10)  # 设置内部控件间距
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
 
         # Image area (left side)
         self.image_label = QLabel()
@@ -79,25 +87,27 @@ class BookMarkBox(QWidget):
 
         label_layout.setContentsMargins(10, 0, 10, 0)
         label_layout.setSpacing(5)
-        layout.addLayout(label_layout, 1)
+        layout.addLayout(label_layout, 5)
 
-        # Buttons area (right side)
         button_layout = QVBoxLayout()
-        button_layout.setContentsMargins(10, 0, 0, 0)  # 设置按钮区块的外边距
-        button_layout.setSpacing(5)  # 设置按钮之间的间距
+        button_layout.setContentsMargins(10, 0, 0, 0)
+        button_layout.setSpacing(5)
 
-        remove_button = QPushButton("觀看")
-        remove_button.setMinimumWidth(100)
-        button_layout.addWidget(remove_button)
-
-        watch_button = QPushButton("取消收藏")
+        watch_button = QPushButton("觀看")
+        watch_button.clicked.connect(lambda: self.watch_on_click(self.ani_url))
         watch_button.setMinimumWidth(100)
         button_layout.addWidget(watch_button)
+
+        remove_button = QPushButton("取消收藏")
+        remove_button.clicked.connect(lambda: self.remove_bookmark_on_click(self.id))
+        remove_button.setMinimumWidth(100)
+        button_layout.addWidget(remove_button)
 
         layout.addLayout(button_layout)
 
         self.setLayout(layout)
-        self.setFixedSize(500, 200)
+        self.setMinimumWidth(500)
+        self.setFixedHeight(200)
 
     def load_image(self, source):
         try:
@@ -121,9 +131,34 @@ class BookMarkBox(QWidget):
             pixmap = QPixmap(NA_PIC_PATH)
             self.image_label.setPixmap(pixmap.scaled(100, 170, Qt.AspectRatioMode.KeepAspectRatio))
 
+    def watch_on_click(self, ani_url):
+        webbrowser.open(ani_url)
+
+    def remove_bookmark_on_click(self, ani_id):
+        self.bookmark.delete_bookmark(ani_id)
+
+        self.bookmark_remove_signal.emit(True)
+
+
 class BookMarkWidget(QWidget):
     def __init__(self):
         super().__init__()
+
+        self.bookmarks_format = {
+            "id": "",
+            "ani_name": "",
+            "source": "",
+            "episodes": "",
+            "time": "",
+            "ani_url": "",
+            "image_url": ""
+        }
+
+        self.bookmark = BookMark()
+        self.history = History()
+
+        self.current_filter = 0
+
         self.initUI()
 
     def initUI(self):
@@ -134,14 +169,13 @@ class BookMarkWidget(QWidget):
 
         # Top bar
         top_bar = QHBoxLayout()
-        top_bar.addStretch()
+
+        top_bar.addStretch()  # 將 stretch 添加到最左側，使下拉選單靠右
 
         filter_combo = QComboBox()
-        filter_combo.addItems(["無", "未觀看", "已觀看"])
+        filter_combo.addItems(["全部", "未觀看", "已觀看"])
+        filter_combo.currentIndexChanged.connect(lambda: self.load_bookmarks(ani_filter=filter_combo.currentIndex()))
         top_bar.addWidget(filter_combo)
-
-        filter_button = QPushButton("篩選")
-        top_bar.addWidget(filter_button)
 
         main_layout.addLayout(top_bar)
 
@@ -149,33 +183,71 @@ class BookMarkWidget(QWidget):
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_content = QWidget()
-        scroll_layout = QGridLayout(scroll_content)
-        scroll_layout.setHorizontalSpacing(20)
-        scroll_layout.setVerticalSpacing(20)
-
-        # Add BookMarkBoxes to the grid
-        test_dict = {
-            "id": "123",
-            "ani_name": "有希我婆",
-            "source": "我家",
-            "episodes": "5",
-            "time": "6:09",
-            "ani_url": "none",
-            "image_url": "https://img.lzzyimg.com/upload/vod/20240703-1/7e664a01462469461c9f5e86830100c1.jpg"
-            }
-        for i in range(5):
-            box = BookMarkBox(**test_dict)
-            row = i // 2
-            col = i % 2
-            scroll_layout.addWidget(box, row, col)
+        self.scroll_layout = QGridLayout(scroll_content)
+        self.scroll_layout.setHorizontalSpacing(20)
+        self.scroll_layout.setVerticalSpacing(20)
 
         scroll_area.setWidget(scroll_content)
         main_layout.addWidget(scroll_area)
 
         self.setLayout(main_layout)
 
-    def get_bookmarks(self) -> list[dict] | bool:
-        pass
+        self.load_bookmarks()
+
+    def load_bookmarks(self, ani_filter=0):
+        """
+        :param ani_filter: 0代表篩選為全部, 1代表篩選未觀看內容, 2代表篩選已觀看內容
+        :return:
+        """
+        self.current_filter = ani_filter
+        bookmark_dict = []
+
+        # 清除現有的所有書籤
+        for i in reversed(range(self.scroll_layout.count())):
+            widget = self.scroll_layout.itemAt(i).widget()
+            if widget is not None:
+                widget.setParent(None)
+
+        read_bookmark_dict = self.bookmark.read_all_bookmark()
+
+        if read_bookmark_dict:
+            # 加入模板
+            for item in read_bookmark_dict:
+                history = self.history.find_history_by_id(item["id"])
+
+                bookmark = self.bookmarks_format.copy()
+                bookmark["id"] = item["id"]
+                bookmark["ani_name"] = item["ani_name"]
+                bookmark["source"] = item["source"]
+                bookmark["episodes"] = history["episodes"] if history else ""
+                bookmark["time"] = history["time"] if history else ""
+                bookmark["ani_url"] = item["ani_url"]
+                bookmark["image_url"] = item["image_url"]
+
+                bookmark_dict.append(bookmark)
+
+            # 篩選
+            if ani_filter == 1:
+                bookmark_dict = [b for b in bookmark_dict if b["episodes"] == ""]
+            elif ani_filter == 2:
+                bookmark_dict = [b for b in bookmark_dict if b["episodes"] != ""]
+
+        if bookmark_dict:
+            for i in range(len(bookmark_dict)):
+                box = BookMarkBox(**bookmark_dict[i])
+                box.bookmark_remove_signal.connect(self.refresh_bookmarks)
+                row = i // 2
+                col = i % 2
+                self.scroll_layout.addWidget(box, row, col)
+        else:
+            no_bookmark_label = QLabel("目前沒有任何收藏內容")
+            no_bookmark_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            no_bookmark_label.setStyleSheet("font-size: 18px; color: #888;")
+            self.scroll_layout.addWidget(no_bookmark_label, 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+
+    def refresh_bookmarks(self):
+        self.load_bookmarks(self.current_filter)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

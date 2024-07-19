@@ -11,6 +11,8 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt
 
 from src.api import Search
+from src.datamanager import BookMark
+from src.datamanager.utils import generate_id
 
 
 ROOT_PATH = os.getcwd()
@@ -25,6 +27,8 @@ requests_cache.install_cache(CACHE_PATH, backend='sqlite', expire_after=2592000)
 class ResultBox(QWidget):
     def __init__(self, image_url, name, source, ani_url):
         super().__init__()
+
+        self.bookmark = BookMark()
 
         self.setFixedHeight(150)
 
@@ -41,7 +45,7 @@ class ResultBox(QWidget):
         text_layout = QVBoxLayout()
         self.name_label = QLabel(name)
         self.name_label.setStyleSheet("color: white; font-size: 25px; padding: 5px 5px; font-weight: bold;")
-        self.source_label = QLabel('來源 : '+source)
+        self.source_label = QLabel('來源 : ' + source)
         self.source_label.setStyleSheet("color: white; font-size: 18px; padding: 5px 5px;")
         text_layout.addWidget(self.name_label)
         text_layout.addWidget(self.source_label)
@@ -49,8 +53,10 @@ class ResultBox(QWidget):
         # Create buttons layout
         buttons_layout = QHBoxLayout()
         self.favorite_button = QPushButton("收藏")
+        self.favorite_button.clicked.connect(lambda: self.add_bookmark(ani_name=name, source=source,
+                                                                       ani_url=ani_url, image_url=image_url))
         self.watch_button = QPushButton("觀看")
-        self.watch_button.clicked.connect(lambda: webbrowser.open(ani_url))
+        self.watch_button.clicked.connect(lambda: self.watch_on_click(ani_url))
         buttons_layout.addWidget(self.favorite_button)
         buttons_layout.addWidget(self.watch_button)
 
@@ -87,6 +93,19 @@ class ResultBox(QWidget):
             self.image_label.setPixmap(pixmap)
             self.image_label.setFixedHeight(170)
             self.image_label.setFixedWidth(100)
+
+    def add_bookmark(self, ani_name, source, ani_url, image_url):
+        bookmark = {
+            "id": generate_id(ani_name + source),
+            "ani_name": ani_name,
+            "source": source,
+            "ani_url": ani_url,
+            "image_url": image_url
+        }
+        self.bookmark.add_bookmark(**bookmark)
+
+    def watch_on_click(self, ani_url):
+        webbrowser.open(ani_url)
 
 
 class SearchWidget(QWidget):
@@ -144,8 +163,13 @@ class SearchWidget(QWidget):
         main_layout.addWidget(self.result_area)
 
     def search(self):
+        if not self.search_input.text():
+            self.display_no_results()
+            return
+
         results = []
-        # Clean old results
+
+        # 刪除舊的內容
         for i in reversed(range(self.result_layout.count() - 1)):
             widget_to_remove = self.result_layout.itemAt(i).widget()
             self.result_layout.removeWidget(widget_to_remove)
@@ -192,7 +216,12 @@ class SearchWidget(QWidget):
 
     def display_no_results(self):
         no_results_label = QLabel("無搜尋結果")
-        self.result_layout.insertWidget(self.result_layout.count() - 1, no_results_label)
+        no_results_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        no_results_label.setStyleSheet("font-size: 18px; color: #888; margin: 20px 0;")
+
+        self.result_layout.addWidget(no_results_label)
+
+        self.result_layout.addStretch()
 
 
 if __name__ == "__main__":
