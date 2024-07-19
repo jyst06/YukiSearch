@@ -10,6 +10,7 @@ from src.window.main_window import Ui_MainWindow
 from src.window.search_widget import SearchWidget
 from src.window.home_widget import HomeWidget
 from src.window.notification_box_widget import Notification
+from src.window.bookmark_widget import BookMarkWidget
 
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -96,6 +97,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.search_widget = SearchWidget()
         self.home_widget = HomeWidget()
         self.notification_box = Notification(self)
+        self.bookmark_widget = BookMarkWidget()
 
     def complete_initialization(self):
         stylesheet_path = os.path.join(CURRENT_PATH, "style.css")
@@ -214,7 +216,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             {
                 "name": "收藏",
                 "icon": os.path.join(ROOT_PATH, "assets/icons/bookmark.svg"),
-                "widget": QLabel("收藏 Coming soon")
+                "widget": self.bookmark_widget
             },
             {
                 "name": "紀錄",
@@ -229,7 +231,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         ]
 
     def switch_to_search_and_execute(self, search_query):
-        self.notification_box.show_notification("提示", "正在搜尋...", font_color="green")
+        self.notification_box.show_notification("提示", "正在搜尋...", font_color="green", duration=500)
 
         # Create and start search thread
         self.search_thread = SearchThread(search_query=search_query)

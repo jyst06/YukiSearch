@@ -62,7 +62,7 @@ class History:
         """
         return self.data_manager.update("id", ani_id, kwargs)
 
-    def read_all_history(self) -> list:
+    def read_all_history(self) -> list[dict]:
         """
         讀取全部紀錄
 

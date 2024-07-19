@@ -23,7 +23,7 @@ class Notification(QWidget):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.hide)
 
-    def show_notification(self, title, message, font_color="white", duration=3000):
+    def show_notification(self, title, message, font_color="white", duration=2000):
         self.timer.stop()  # 停止任何正在運行的計時器
 
         self.title_label.setText(title)
@@ -52,7 +52,7 @@ class Notification(QWidget):
             self.move(parent_geometry.right() - self.width() - 10,
                       parent_geometry.bottom() - self.height() - 10)
 
-class MainWindow(QMainWindow):
+class _TestWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Notification Test")
@@ -69,11 +69,11 @@ class MainWindow(QMainWindow):
         self.notification = Notification(self)
 
     def show_notification(self):
-        self.notification.show_notification("警告", "已新增過此部動漫", font_color="red", duration=3000)
+        self.notification.show_notification("警告", "已新增過此部動漫", font_color="red", duration=2000)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    main_window = MainWindow()
+    main_window = _TestWindow()
     main_window.show()
     sys.exit(app.exec())

@@ -1,6 +1,7 @@
 import sys
 import os
 import requests
+import requests_cache
 import webbrowser
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
@@ -12,8 +13,13 @@ from PyQt6.QtCore import Qt
 from src.api import Search
 
 
+ROOT_PATH = os.getcwd()
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 NA_PIC_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\assets\pics\na.jpg"#os.path.join(os.getcwd(), "assets/pics/na.jpg")
+CACHE_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\data\image_cache"#os.path.join(ROOT_PATH, "data", "image_cache")
+
+
+requests_cache.install_cache(CACHE_PATH, backend='sqlite', expire_after=2592000)
 
 
 class ResultBox(QWidget):
