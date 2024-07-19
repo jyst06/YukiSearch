@@ -4,7 +4,7 @@ from random import choice
 from PyQt6.QtWidgets import QMainWindow, QApplication, QListWidgetItem, QWidget, QVBoxLayout, QLabel, QSplashScreen, \
     QProgressBar
 from PyQt6.QtGui import QIcon, QPixmap, QFont
-from PyQt6.QtCore import QSize, Qt, pyqtSignal, QThread, QTimer
+from PyQt6.QtCore import QSize, Qt, pyqtSignal, QThread, QTimer, QMetaObject
 
 from src.window.main_window import Ui_MainWindow
 from src.window.search_widget import SearchWidget
@@ -23,12 +23,11 @@ class LoadingScreen(QSplashScreen):
         super().__init__()
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.FramelessWindowHint)
 
-        # 載入自訂圖片
         pixmap = QPixmap(image_path)
         if pixmap.isNull():
             print(f"警告: 無法載入圖片 {image_path}")
-            pixmap = QPixmap(400, 200)  # 創建一個空白的 pixmap 作為後備
-            pixmap.fill(Qt.GlobalColor.white)  # 填充為白色背景
+            pixmap = QPixmap(400, 200)
+            pixmap.fill(Qt.GlobalColor.white)
         else:
             pixmap = pixmap.scaled(400, 200, Qt.AspectRatioMode.KeepAspectRatio,
                                    Qt.TransformationMode.SmoothTransformation)
@@ -69,11 +68,21 @@ class SearchThread(QThread):
         self.searchCompleted.emit(self.search_query)
 
 
+class NotificationThread(QThread):
+    notificationReady = pyqtSignal(dict)
+
+    def __init__(self, parent=None, notification=None):
+        super().__init__(parent)
+        self.notification = notification
+
+    def run(self):
+        self.notificationReady.emit(self.notification)
+
+
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
 
-        # 加載時的背景圖片
         loading_image_path = os.path.join(ROOT_PATH, "assets/pics/img.png")
         self.loading_screen = LoadingScreen(loading_image_path)
         self.loading_screen.show()
@@ -109,6 +118,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
         self.setWindowTitle("YukiSearch")
+        self.resize(1500, 900)
 
         self.setup_ui_elements()
         self.init_side_menu_items()
@@ -118,6 +128,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.home_widget.searchSignal.connect(self.switch_to_search_and_execute)
         self.stackedWidget.currentChanged.connect(self.on_page_changed)
+        self.search_widget.notification_signal.connect(self.notification_signal_receive)
+        self.bookmark_widget.bookmark_remove_msg_signal.connect(self.notification_signal_receive)
 
     def setup_ui_elements(self):
         self.side_title_text.setText(" ")
@@ -234,7 +246,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def switch_to_search_and_execute(self, search_query):
         self.notification_box.show_notification("提示", "正在跳轉搜尋...", font_color="green", duration=500)
 
-        # Create and start search thread
         self.search_thread = SearchThread(search_query=search_query)
         self.search_thread.searchCompleted.connect(self.search_completed)
         self.search_thread.start()
@@ -252,6 +263,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         current_widget = self.stackedWidget.widget(index)
         if current_widget == self.bookmark_widget:
             self.bookmark_widget.load_bookmarks()
+
+    def notification_signal_receive(self, notification):
+        self.notification_thread = NotificationThread(notification=notification)
+        self.notification_thread.notificationReady.connect(self.show_notification_from_signal)
+        self.notification_thread.start()
+
+    def show_notification_from_signal(self, notification):
+        try:
+            title = notification["title"]
+            message = notification["msg"]
+
+            try:
+                color = notification["color"]
+            except:
+                color = "white"
+
+            try:
+                duration = notification["time"]
+            except:
+                duration = 2000
+
+            self.notification_box.show_notification(title, message, font_color=color, duration=duration)
+        except Exception as e:
+            print(f"Error in show_notification_from_signal: {e}")
 
 
 def show_main_window():

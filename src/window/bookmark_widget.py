@@ -141,6 +141,8 @@ class BookMarkBox(QWidget):
 
 
 class BookMarkWidget(QWidget):
+    bookmark_remove_msg_signal = pyqtSignal(dict)
+
     def __init__(self):
         super().__init__()
 
@@ -235,7 +237,7 @@ class BookMarkWidget(QWidget):
         if bookmark_dict:
             for i in range(len(bookmark_dict)):
                 box = BookMarkBox(**bookmark_dict[i])
-                box.bookmark_remove_signal.connect(self.refresh_bookmarks)
+                box.bookmark_remove_signal.connect(self.bookmark_remove_signal_receive)
                 row = i // 2
                 col = i % 2
                 self.scroll_layout.addWidget(box, row, col)
@@ -245,7 +247,8 @@ class BookMarkWidget(QWidget):
             no_bookmark_label.setStyleSheet("font-size: 18px; color: #888;")
             self.scroll_layout.addWidget(no_bookmark_label, 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
-    def refresh_bookmarks(self):
+    def bookmark_remove_signal_receive(self):
+        self.bookmark_remove_msg_signal.emit({"title": "提示", "msg": "已移出收藏列表", "color": "green", "time": 1500})
         self.load_bookmarks(self.current_filter)
 
 

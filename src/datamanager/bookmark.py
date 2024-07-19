@@ -84,6 +84,17 @@ class BookMark:
         """
         return self.data_manager.delete("id", ani_id)
 
+    def find_bookmark_by_id(self, ani_id: str) -> dict | None:
+        """
+        ID查詢書籤
+
+        :param ani_id: 動漫ID
+        :return:
+            dict: 找到的書籤
+            or None: 如果找不到
+        """
+        return self.data_manager.find("id", ani_id)
+
 
 if __name__ == '__main__':
     bookmark = BookMark()

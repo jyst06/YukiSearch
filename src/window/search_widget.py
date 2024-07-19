@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QScrollArea, QLabel, QVBoxLayout, QComboBox
 )
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 
 from src.api import Search
 from src.datamanager import BookMark
@@ -25,6 +25,8 @@ requests_cache.install_cache(CACHE_PATH, backend='sqlite', expire_after=2592000)
 
 
 class ResultBox(QWidget):
+    notification_signal = pyqtSignal(dict)
+
     def __init__(self, image_url, name, source, ani_url):
         super().__init__()
 
@@ -95,6 +97,10 @@ class ResultBox(QWidget):
             self.image_label.setFixedWidth(100)
 
     def add_bookmark(self, ani_name, source, ani_url, image_url):
+        if self.bookmark.find_bookmark_by_id(generate_id(ani_name + source)):
+            self.notification_signal.emit({"title": "警告", "msg": "已經收藏過了", "color": "red"})
+            return
+
         bookmark = {
             "id": generate_id(ani_name + source),
             "ani_name": ani_name,
@@ -102,13 +108,17 @@ class ResultBox(QWidget):
             "ani_url": ani_url,
             "image_url": image_url
         }
+
         self.bookmark.add_bookmark(**bookmark)
+        self.notification_signal.emit({"title": "提示", "msg": "已加入收藏", "color": "green"})
 
     def watch_on_click(self, ani_url):
         webbrowser.open(ani_url)
 
 
 class SearchWidget(QWidget):
+    notification_signal = pyqtSignal(dict)
+
     def __init__(self):
         super().__init__()
 
@@ -209,6 +219,7 @@ class SearchWidget(QWidget):
         try:
             for result in results:
                 custom_widget = ResultBox(result["image"], result["name"], result["source"], result["ani_url"])
+                custom_widget.notification_signal.connect(self.notification_signal_receive)
                 self.result_layout.insertWidget(self.result_layout.count() - 1,
                                                 custom_widget)
         except Exception as e:
@@ -222,6 +233,9 @@ class SearchWidget(QWidget):
         self.result_layout.addWidget(no_results_label)
 
         self.result_layout.addStretch()
+
+    def notification_signal_receive(self, notification):
+        self.notification_signal.emit(notification)
 
 
 if __name__ == "__main__":
