@@ -17,8 +17,8 @@ from src.datamanager.utils import generate_id
 
 ROOT_PATH = os.getcwd()
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
-NA_PIC_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\assets\pics\na.jpg"#os.path.join(os.getcwd(), "assets/pics/na.jpg")
-CACHE_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\data\image_cache"#os.path.join(ROOT_PATH, "data", "image_cache")
+NA_PIC_PATH = os.path.join(ROOT_PATH, "assets/pics/na.jpg")
+CACHE_PATH = os.path.join(ROOT_PATH, "data", "image_cache")
 
 
 requests_cache.install_cache(CACHE_PATH, backend='sqlite', expire_after=2592000)
@@ -144,7 +144,7 @@ class SearchWidget(QWidget):
         self.initUI()
 
     def initUI(self):
-        stylesheet_path = os.path.join(CURRENT_PATH, "style.css")
+        stylesheet_path = os.path.join(CURRENT_PATH, "style.qss")
         with open(stylesheet_path, "r", encoding="utf-8") as f:
             self.setStyleSheet(f.read())
 

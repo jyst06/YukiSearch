@@ -2,8 +2,8 @@ import os
 import sys
 from random import choice
 from PyQt6.QtWidgets import QMainWindow, QApplication, QListWidgetItem, QWidget, QVBoxLayout, QLabel, QSplashScreen, \
-    QProgressBar
-from PyQt6.QtGui import QIcon, QPixmap, QFont
+    QProgressBar, QSystemTrayIcon, QMenu
+from PyQt6.QtGui import QIcon, QPixmap, QFont, QAction
 from PyQt6.QtCore import QSize, Qt, pyqtSignal, QThread, QTimer, QMetaObject
 
 from src.window.main_window import Ui_MainWindow
@@ -12,11 +12,14 @@ from src.window.home_widget import HomeWidget
 from src.window.notification_box_widget import Notification
 from src.window.bookmark_widget import BookMarkWidget
 from src.window.add_history_widget import AddHistoryWidget
+from src.window.history_widget import HistoryWidget
+from src.window.setting_widget import SettingWidget
+from src.datamanager.utils import read_settings
 
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.getcwd()
-STYLESHEET_PATH = os.path.join(CURRENT_PATH, "style.css")
+STYLESHEET_PATH = os.path.join(CURRENT_PATH, "style.qss")
 
 
 class LoadingScreen(QSplashScreen):
@@ -92,6 +95,38 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.timer.timeout.connect(self.initialize_app)
         self.timer.start(30)
 
+        self.settings = read_settings()
+
+        self.tray_icon = QSystemTrayIcon(self)
+        self.tray_icon.setIcon(QIcon(os.path.join(ROOT_PATH, "assets/icons/icon.ico")))
+
+        tray_menu = QMenu(self)
+        restore_action = QAction("恢復", self)
+        quit_action = QAction("退出", self)
+
+        restore_action.triggered.connect(self.show)
+        quit_action.triggered.connect(QApplication.instance().quit)
+
+        tray_menu.addAction(restore_action)
+        tray_menu.addAction(quit_action)
+
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.activated.connect(self.on_tray_icon_activated)
+
+        self.tray_icon.show()
+
+    def on_tray_icon_activated(self, reason):
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            self.show()
+            self.raise_()
+            self.activateWindow()
+
+    def closeEvent(self, event):
+        if self.settings.get("minimize_window") and self.tray_icon.isVisible():
+            self.hide()
+            event.ignore()
+            print("最小化")
+
     def initialize_app(self):
         if self.loading_screen.progress_bar.value() >= 100:
             self.timer.stop()
@@ -109,6 +144,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.home_widget = HomeWidget()
         self.notification_box = Notification(self)
         self.bookmark_widget = BookMarkWidget()
+        self.history_widget = HistoryWidget()
+        self.setting_widget = SettingWidget()
 
     def complete_initialization(self):
         with open(STYLESHEET_PATH, "r", encoding="utf-8") as f:
@@ -135,6 +172,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.search_widget.add_history_signal.connect(self.show_add_history_from_signal)
         self.bookmark_widget.bookmark_remove_msg_signal.connect(self.notification_signal_receive)
         self.bookmark_widget.add_history_signal.connect(self.show_add_history_from_signal)
+        self.history_widget.history_remove_msg_signal.connect(self.notification_signal_receive)
+        self.history_widget.add_history_signal.connect(self.show_add_history_from_signal)
 
     def setup_ui_elements(self):
         self.side_title_text.setText(" ")
@@ -227,11 +266,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 "widget": self.search_widget
             },
             {
-                "name": "篩選",
-                "icon": os.path.join(ROOT_PATH, "assets/icons/filter.svg"),
-                "widget": QLabel("篩選 Coming soon")
-            },
-            {
                 "name": "收藏",
                 "icon": os.path.join(ROOT_PATH, "assets/icons/bookmark.svg"),
                 "widget": self.bookmark_widget
@@ -239,12 +273,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             {
                 "name": "紀錄",
                 "icon": os.path.join(ROOT_PATH, "assets/icons/clock.svg"),
-                "widget": QLabel("紀錄 Coming soon")
+                "widget": self.history_widget
             },
             {
                 "name": "設定",
                 "icon": os.path.join(ROOT_PATH, "assets/icons/settings.svg"),
-                "widget": QLabel("設定 Coming soon")
+                "widget": self.setting_widget
             }
         ]
 
@@ -268,6 +302,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         current_widget = self.stackedWidget.widget(index)
         if current_widget == self.bookmark_widget:
             self.bookmark_widget.load_bookmarks()
+        elif current_widget == self.history_widget:
+            self.history_widget.load_histories()
 
     def notification_signal_receive(self, notification):
         self.notification_thread = NotificationThread(notification=notification)

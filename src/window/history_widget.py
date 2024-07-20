@@ -3,12 +3,12 @@ import webbrowser
 import requests
 import requests_cache
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
-                             QLabel, QPushButton, QComboBox, QScrollArea, QGridLayout, QSpacerItem, QSizePolicy)
-from PyQt6.QtCore import Qt, QSize, pyqtSignal
+                             QLabel, QPushButton, QScrollArea, QGridLayout)
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap
 
-from src.datamanager import BookMark
 from src.datamanager import History
+
 
 ROOT_PATH = os.getcwd()
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -18,13 +18,14 @@ CACHE_PATH = os.path.join(ROOT_PATH, "data", "image_cache")
 
 requests_cache.install_cache(CACHE_PATH, backend='sqlite', expire_after=2592000)
 
-class BookMarkBox(QWidget):
-    bookmark_remove_signal = pyqtSignal(bool)
+
+class HistoryBox(QWidget):
+    history_remove_signal = pyqtSignal(bool)
     add_history_signal = pyqtSignal(dict)
 
     def __init__(self, **kwargs):
         """
-        書籤物件區塊
+        歷史記錄物件區塊
 
         :param kwargs:
             id (str): 動漫 ID
@@ -37,7 +38,7 @@ class BookMarkBox(QWidget):
         """
         super().__init__()
 
-        self.bookmark = BookMark()
+        self.history = History()
 
         self.id = kwargs.get("id")
         self.image_url = kwargs.get("image_url")
@@ -97,13 +98,13 @@ class BookMarkBox(QWidget):
         button_layout.setContentsMargins(10, 0, 0, 0)
         button_layout.setSpacing(5)
 
-        watch_button = QPushButton("觀看")
+        watch_button = QPushButton("繼續觀看")
         watch_button.clicked.connect(self.watch_on_click)
         watch_button.setMinimumWidth(100)
         button_layout.addWidget(watch_button)
 
-        remove_button = QPushButton("取消收藏")
-        remove_button.clicked.connect(lambda: self.remove_bookmark_on_click(self.id))
+        remove_button = QPushButton("刪除紀錄")
+        remove_button.clicked.connect(lambda: self.remove_history_on_click(self.id))
         remove_button.setMinimumWidth(100)
         button_layout.addWidget(remove_button)
 
@@ -150,21 +151,21 @@ class BookMarkBox(QWidget):
         except Exception as e:
             print(f"Error opening URL or emitting signal: {e}")
 
-    def remove_bookmark_on_click(self, ani_id):
+    def remove_history_on_click(self, ani_id):
         try:
-            self.bookmark.delete_bookmark(ani_id)
-            self.bookmark_remove_signal.emit(True)
+            self.history.delete_history(ani_id)
+            self.history_remove_signal.emit(True)
         except Exception as e:
-            print(f"Error removing bookmark or emitting signal: {e}")
+            print(f"Error removing history or emitting signal: {e}")
 
-class BookMarkWidget(QWidget):
-    bookmark_remove_msg_signal = pyqtSignal(dict)
+class HistoryWidget(QWidget):
+    history_remove_msg_signal = pyqtSignal(dict)
     add_history_signal = pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()
 
-        self.bookmarks_format = {
+        self.history_format = {
             "id": "",
             "ani_name": "",
             "source": "",
@@ -174,10 +175,7 @@ class BookMarkWidget(QWidget):
             "image_url": ""
         }
 
-        self.bookmark = BookMark()
         self.history = History()
-
-        self.current_filter = 0
 
         try:
             self.initUI()
@@ -193,19 +191,7 @@ class BookMarkWidget(QWidget):
 
         main_layout = QVBoxLayout()
 
-        # Top bar
-        top_bar = QHBoxLayout()
-
-        top_bar.addStretch()  # 將 stretch 添加到最左側，使下拉選單靠右
-
-        filter_combo = QComboBox()
-        filter_combo.addItems(["全部", "未觀看", "已觀看"])
-        filter_combo.currentIndexChanged.connect(lambda: self.load_bookmarks(ani_filter=filter_combo.currentIndex()))
-        top_bar.addWidget(filter_combo)
-
-        main_layout.addLayout(top_bar)
-
-        # Scroll area for BookMarkBoxes
+        # Scroll area for HistoryBoxes
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_content = QWidget()
@@ -219,71 +205,62 @@ class BookMarkWidget(QWidget):
         self.setLayout(main_layout)
 
         try:
-            self.load_bookmarks()
+            self.load_histories()
         except Exception as e:
-            print(f"Error loading bookmarks: {e}")
+            print(f"Error loading histories: {e}")
 
-    def load_bookmarks(self, ani_filter=0):
+    def load_histories(self):
         """
         :param ani_filter: 0代表篩選為全部, 1代表篩選未觀看內容, 2代表篩選已觀看內容
         :return:
         """
         try:
-            self.current_filter = ani_filter
-            bookmark_dict = []
+            history_dict = []
 
-            # 清除現有的所有書籤
+            # 清除現有的所有歷史記錄
             for i in reversed(range(self.scroll_layout.count())):
                 widget = self.scroll_layout.itemAt(i).widget()
                 if widget is not None:
                     widget.setParent(None)
 
-            read_bookmark_dict = self.bookmark.read_all_bookmark()
+            read_history_dict = self.history.read_all_history()
 
-            if read_bookmark_dict:
+            if read_history_dict:
                 # 加入模板
-                for item in read_bookmark_dict:
-                    history = self.history.find_history_by_id(item["id"])
+                for item in read_history_dict:
+                    history = self.history_format.copy()
+                    history["id"] = item["id"]
+                    history["ani_name"] = item["ani_name"]
+                    history["source"] = item["source"]
+                    history["episodes"] = item["episodes"]
+                    history["time"] = item["time"]
+                    history["ani_url"] = item["ani_url"]
+                    history["image_url"] = item["image_url"]
 
-                    bookmark = self.bookmarks_format.copy()
-                    bookmark["id"] = item["id"]
-                    bookmark["ani_name"] = item["ani_name"]
-                    bookmark["source"] = item["source"]
-                    bookmark["episodes"] = history["episodes"] if history else ""
-                    bookmark["time"] = history["time"] if history else ""
-                    bookmark["ani_url"] = item["ani_url"]
-                    bookmark["image_url"] = item["image_url"]
+                    history_dict.append(history)
 
-                    bookmark_dict.append(bookmark)
-
-                # 篩選
-                if ani_filter == 1:
-                    bookmark_dict = [b for b in bookmark_dict if b["episodes"] == ""]
-                elif ani_filter == 2:
-                    bookmark_dict = [b for b in bookmark_dict if b["episodes"] != ""]
-
-            if bookmark_dict:
-                for i in range(len(bookmark_dict)):
-                    box = BookMarkBox(**bookmark_dict[i])
-                    box.bookmark_remove_signal.connect(self.bookmark_remove_signal_receive)
+            if history_dict:
+                for i in range(len(history_dict)):
+                    box = HistoryBox(**history_dict[i])
+                    box.history_remove_signal.connect(self.history_remove_signal_receive)
                     box.add_history_signal.connect(self.add_history_signal_receive)
                     row = i // 2
                     col = i % 2
                     self.scroll_layout.addWidget(box, row, col)
             else:
-                no_bookmark_label = QLabel("目前沒有任何收藏內容")
-                no_bookmark_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                no_bookmark_label.setStyleSheet("font-size: 18px; color: #888;")
-                self.scroll_layout.addWidget(no_bookmark_label, 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+                no_history_label = QLabel("目前沒有任何歷史記錄")
+                no_history_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                no_history_label.setStyleSheet("font-size: 18px; color: #888;")
+                self.scroll_layout.addWidget(no_history_label, 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
         except Exception as e:
-            print(f"Error loading bookmarks: {e}")
+            print(f"Error loading histories: {e}")
 
-    def bookmark_remove_signal_receive(self):
+    def history_remove_signal_receive(self):
         try:
-            self.bookmark_remove_msg_signal.emit({"title": "提示", "msg": "已移出收藏列表", "color": "green", "time": 1500})
-            self.load_bookmarks(self.current_filter)
+            self.history_remove_msg_signal.emit({"title": "提示", "msg": "已移除記錄", "color": "green", "time": 1500})
+            self.load_histories()
         except Exception as e:
-            print(f"Error handling bookmark remove signal: {e}")
+            print(f"Error handling history remove signal: {e}")
 
     def add_history_signal_receive(self, kwargs):
         try:
@@ -294,7 +271,7 @@ class BookMarkWidget(QWidget):
 if __name__ == '__main__':
     try:
         app = QApplication(sys.argv)
-        widget = BookMarkWidget()
+        widget = HistoryWidget()
         widget.resize(900, 600)
         widget.show()
         sys.exit(app.exec())

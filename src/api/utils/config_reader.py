@@ -2,8 +2,9 @@ import configparser
 import os
 
 
+ROOT_PATH = os.getcwd()
 CONFIG_FILE_NAME = 'api.ini'
-CONFIG_FILE_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\configs\api.ini"#os.path.join(os.getcwd(), "configs/"+CONFIG_FILE_NAME)
+CONFIG_FILE_PATH = os.path.join(ROOT_PATH, "configs", CONFIG_FILE_NAME)
 
 
 def read_search_apis() -> dict:

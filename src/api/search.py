@@ -8,7 +8,8 @@ from src.api.utils import read_search_apis, read_video_apis
 from src.datamanager.utils import generate_id
 
 
-NA_PIC_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\assets\pics\na.jpg"#os.path.join(os.getcwd(), "assets/pics/na.jpg")
+ROOT_PATH = os.getcwd()
+NA_PIC_PATH = os.path.join(ROOT_PATH, "assets/pics/na.jpg")
 
 
 class Search:

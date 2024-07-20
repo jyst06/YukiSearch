@@ -4,7 +4,7 @@ import os
 
 
 ROOT_PATH = os.getcwd()
-BOOKMARK_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\data\bookmark.json" #os.path.join(ROOT_PATH, 'data', 'history.json')
+BOOKMARK_PATH = os.path.join(ROOT_PATH, 'data', 'bookmark.json')
 
 
 class BookMark:

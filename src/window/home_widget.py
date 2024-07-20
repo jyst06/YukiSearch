@@ -6,7 +6,7 @@ from src.api.week_anime import SearchWeekAnime
 
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
-STYLESHEET_PATH = os.path.join(CURRENT_PATH, "style.css")
+STYLESHEET_PATH = os.path.join(CURRENT_PATH, "style.qss")
 
 
 class AnimeBoxWidget(QWidget):

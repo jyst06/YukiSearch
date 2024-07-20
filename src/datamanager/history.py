@@ -3,7 +3,7 @@ import os
 
 
 ROOT_PATH = os.getcwd()
-HISTORY_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\data\history.json" #os.path.join(ROOT_PATH, 'data', 'history.json')
+HISTORY_PATH = os.path.join(ROOT_PATH, 'data', 'history.json')
 
 
 class History:

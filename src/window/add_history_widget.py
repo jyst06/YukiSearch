@@ -11,9 +11,9 @@ from src.datamanager import History
 
 ROOT_PATH = os.getcwd()
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
-NA_PIC_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\assets\pics\na.jpg"  # os.path.join(os.getcwd(), "assets/pics/na.jpg")
-CACHE_PATH = r"C:\Users\guguc\PycharmProjects\AnimeSearcher\data\image_cache"  # os.path.join(ROOT_PATH, "data", "image_cache")
-STYLESHEET_PATH = os.path.join(CURRENT_PATH, "style.css")
+NA_PIC_PATH = os.path.join(ROOT_PATH, "assets/pics/na.jpg")
+CACHE_PATH = os.path.join(ROOT_PATH, "data", "image_cache")
+STYLESHEET_PATH = os.path.join(CURRENT_PATH, "style.qss")
 
 requests_cache.install_cache(CACHE_PATH, backend='sqlite', expire_after=2592000)
 
