@@ -8,11 +8,13 @@ from PyQt6.QtCore import Qt
 import requests
 
 from src.datamanager.utils import read_settings, edit_settings
+from src.utils import get_application_root_path, get_writable_path
 
 
-CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
-ROOT_PATH = os.getcwd()
-DATA_PATH = os.path.join(ROOT_PATH, "data")
+W_ROOT_PATH = get_writable_path()
+ROOT_PATH = get_application_root_path()
+CURRENT_PATH = os.path.join(ROOT_PATH, "src", "window")
+DATA_PATH = os.path.join(W_ROOT_PATH, "data")
 STYLESHEET_PATH = os.path.join(CURRENT_PATH, "style.qss")
 
 

@@ -1,9 +1,10 @@
 from src.datamanager import JsonDataManager
 import os
+from src.utils import get_writable_path
 
 
-ROOT_PATH = os.getcwd()
-HISTORY_PATH = os.path.join(ROOT_PATH, 'data', 'history.json')
+W_ROOT_PATH = get_writable_path()
+HISTORY_PATH = os.path.join(W_ROOT_PATH, 'data', 'history.json')
 
 
 class History:

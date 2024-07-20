@@ -1,5 +1,10 @@
 import json
 import os
+from src.utils import get_writable_path
+
+
+W_ROOT_PATH = get_writable_path()
+CONFIG_FOLDER_PATH = os.path.join(W_ROOT_PATH, "data")
 
 
 class JsonDataManager:
@@ -9,8 +14,9 @@ class JsonDataManager:
 
     def _ensure_file_exists(self):
         """
-        檢查文件是否存在，如果不存在則創建
+        檢查資料夾跟json在不在
         """
+        os.makedirs(CONFIG_FOLDER_PATH, exist_ok=True)
         if not os.path.exists(self.data_file):
             with open(self.data_file, "w") as file:
                 json.dump({"items": []}, file)

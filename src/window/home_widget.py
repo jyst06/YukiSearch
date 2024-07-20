@@ -3,9 +3,11 @@ import os
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea
 from PyQt6.QtCore import Qt, QSize, pyqtSignal
 from src.api.week_anime import SearchWeekAnime
+from src.utils import get_application_root_path
 
 
-CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+ROOT_PATH = get_application_root_path()
+CURRENT_PATH = os.path.join(ROOT_PATH, "src", "window")
 STYLESHEET_PATH = os.path.join(CURRENT_PATH, "style.qss")
 
 

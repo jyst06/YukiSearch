@@ -1,10 +1,11 @@
 """管理書籤(收藏)"""
 from src.datamanager import JsonDataManager
 import os
+from src.utils import get_writable_path
 
 
-ROOT_PATH = os.getcwd()
-BOOKMARK_PATH = os.path.join(ROOT_PATH, 'data', 'bookmark.json')
+W_ROOT_PATH = get_writable_path()
+BOOKMARK_PATH = os.path.join(W_ROOT_PATH, 'data', 'bookmark.json')
 
 
 class BookMark:

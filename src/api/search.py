@@ -6,9 +6,10 @@ from src.api.utils import generate_user_agent
 from src.api.utils import chinese_traditional_to_simplified, chinese_simplified_to_traditional
 from src.api.utils import read_search_apis, read_video_apis
 from src.datamanager.utils import generate_id
+from src.utils import get_application_root_path
 
 
-ROOT_PATH = os.getcwd()
+ROOT_PATH = get_application_root_path()
 NA_PIC_PATH = os.path.join(ROOT_PATH, "assets/pics/na.jpg")
 
 

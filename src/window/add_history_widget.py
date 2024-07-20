@@ -8,14 +8,18 @@ from PyQt6.QtCore import Qt, pyqtSignal
 
 from src.datamanager.utils import generate_id
 from src.datamanager import History
+from src.utils import get_application_root_path, get_writable_path
 
-ROOT_PATH = os.getcwd()
-CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+
+W_ROOT_PATH = get_writable_path()
+ROOT_PATH = get_application_root_path()
+CURRENT_PATH = os.path.join(ROOT_PATH, "src", "window")
 NA_PIC_PATH = os.path.join(ROOT_PATH, "assets/pics/na.jpg")
-CACHE_PATH = os.path.join(ROOT_PATH, "data", "image_cache")
+CACHE_PATH = os.path.join(W_ROOT_PATH, "data", "image_cache")
 STYLESHEET_PATH = os.path.join(CURRENT_PATH, "style.qss")
 
 requests_cache.install_cache(CACHE_PATH, backend='sqlite', expire_after=2592000)
+
 
 class AddHistoryWidget(QWidget):
     # closed = pyqtSignal()

@@ -1,8 +1,9 @@
 import configparser
 import os
+from src.utils import get_application_root_path
 
 
-ROOT_PATH = os.getcwd()
+ROOT_PATH = get_application_root_path()
 CONFIG_FILE_NAME = 'api.ini'
 CONFIG_FILE_PATH = os.path.join(ROOT_PATH, "configs", CONFIG_FILE_NAME)
 

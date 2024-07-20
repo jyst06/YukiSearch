@@ -15,10 +15,11 @@ from src.window.add_history_widget import AddHistoryWidget
 from src.window.history_widget import HistoryWidget
 from src.window.setting_widget import SettingWidget
 from src.datamanager.utils import read_settings
+from src.utils import get_application_root_path
 
 
-CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
-ROOT_PATH = os.getcwd()
+ROOT_PATH = get_application_root_path()
+CURRENT_PATH = os.path.join(ROOT_PATH, "src", "window")
 STYLESHEET_PATH = os.path.join(CURRENT_PATH, "style.qss")
 
 

@@ -1,8 +1,10 @@
 import random
 import os
+from src.utils import get_application_root_path
 
 
-CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+ROOT_PATH = get_application_root_path()
+CURRENT_PATH = os.path.join(ROOT_PATH, 'src', 'api', 'utils')
 USER_AGENT_PATH = os.path.join(CURRENT_PATH, 'user_agents.txt')
 
 
