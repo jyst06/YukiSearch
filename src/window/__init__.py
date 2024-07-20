@@ -95,8 +95,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.timer.timeout.connect(self.initialize_app)
         self.timer.start(30)
 
-        self.settings = read_settings()
-
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon(os.path.join(ROOT_PATH, "assets/icons/icon.ico")))
 
@@ -122,7 +120,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.activateWindow()
 
     def closeEvent(self, event):
-        if self.settings.get("minimize_window") and self.tray_icon.isVisible():
+        if read_settings().get("minimize_window") and self.tray_icon.isVisible():
             self.hide()
             event.ignore()
             print("最小化")
