@@ -24,7 +24,7 @@ class Notification(QWidget):
         self.timer.timeout.connect(self.hide)
 
     def show_notification(self, title, message, font_color="white", duration=2000):
-        self.timer.stop()  # 停止任何正在運行的計時器
+        self.timer.stop()
 
         self.title_label.setText(title)
         self.message_label.setText(message)
@@ -51,6 +51,7 @@ class Notification(QWidget):
             parent_geometry = parent.geometry()
             self.move(parent_geometry.right() - self.width() - 10,
                       parent_geometry.bottom() - self.height() - 10)
+
 
 class _TestWindow(QMainWindow):
     def __init__(self):

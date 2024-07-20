@@ -29,7 +29,7 @@ class AnimeBoxWidget(QWidget):
         self.layout.addWidget(self.search_button)
 
         self.setLayout(self.layout)
-        self.setFixedHeight(70)  # 設定固定高度
+        self.setFixedHeight(70)
 
     def sizeHint(self):
         return QSize(0, 50)
@@ -47,7 +47,7 @@ class HomeWidget(QWidget):
         week_anime = SearchWeekAnime()
         self.anime_data = week_anime()
 
-        # Set up the main layout
+        # main layout
         self.main_layout = QVBoxLayout()
 
         # Title
@@ -77,7 +77,6 @@ class HomeWidget(QWidget):
             self.button_layout.addWidget(button)
         self.main_layout.addLayout(self.button_layout, stretch=2)
 
-        # Scrollable area for second widgets
         self.scroll_area = QScrollArea()
         self.scroll_area_widget = QWidget()
         self.scroll_area_layout = QVBoxLayout()
@@ -90,8 +89,6 @@ class HomeWidget(QWidget):
         self.main_layout.addWidget(self.scroll_area, stretch=12)
 
         self.setLayout(self.main_layout)
-        self.setWindowTitle("PyQt6 範例")
-        self.setGeometry(100, 100, 800, 600)
 
     def update_content(self, day_key, btn):
         # 更新選中的按鈕樣式
@@ -114,7 +111,7 @@ class HomeWidget(QWidget):
                 self.scroll_area_layout.addWidget(second_widget)
 
     def search_action(self, title):
-        print(f"搜尋按鈕被按下，標題是：{title}")
+        print(f"搜尋：{title}")
         self.searchSignal.emit(title)
 
 

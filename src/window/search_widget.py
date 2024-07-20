@@ -80,12 +80,12 @@ class ResultBox(QWidget):
 
     def load_image(self, source):
         try:
-            if os.path.isfile(source):  # 檢查是否為本地文件
+            if os.path.isfile(source):
                 pixmap = QPixmap(source)
                 if pixmap.isNull():
                     raise ValueError(f"Error loading local image: {source}")
                 print(f"Loaded local image: {source}")
-            else:  # 假設是從網路上讀取的
+            else:
                 response = requests.get(source)
                 response.raise_for_status()
                 image_data = response.content
@@ -149,9 +149,6 @@ class SearchWidget(QWidget):
         stylesheet_path = os.path.join(CURRENT_PATH, "style.qss")
         with open(stylesheet_path, "r", encoding="utf-8") as f:
             self.setStyleSheet(f.read())
-
-        self.setWindowTitle("搜尋範例")
-        self.setGeometry(100, 100, 800, 600)
 
         # 主佈局
         main_layout = QVBoxLayout(self)

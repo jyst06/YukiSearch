@@ -51,3 +51,12 @@
 - [Anime1](https://anime1.me/)
 - [櫻花動漫](https://yhdm.one/)
 - [Bangumi番組計劃](https://bangumi.tv/)
+
+---
+
+## 輔助工具
+
+- [Qt Designer](https://www.qt.io/download-dev) (MainWindow製作)
+- [Claude 3.5 Sonnet](https://claude.ai/) (部分介面排版、基礎功能)
+- [GPT 4o](https://chatgpt.com/) (部分介面排版、基礎功能)
+- [regex101](https://regex101.com/) (正則表達式解析網站)

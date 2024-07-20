@@ -97,22 +97,5 @@ class JsonDataManager:
 if __name__ == '__main__':
     data_manager = JsonDataManager("data.json")
 
-    # 添加數據
-    # new_item = {"name": "item1", "value": 30}
-    # print("Add result:", data_manager.add(new_item))
-    #
-    # 查找數據
-    # found_item = data_manager.find("name", "item1")
-    # print("Found item:", found_item)
-    #
-    # 更新數據
-    # # update_result = data_manager.update("name", "item1", {"value": 200})
-    # # print("Update result:", update_result)
-    #
-    # 讀取所有數據
     all_items = data_manager.read_all()
     print("All items:", all_items)
-
-    # 刪除數據
-    # delete_result = data_manager.delete("value", 20)
-    # print("Delete result:", delete_result)
