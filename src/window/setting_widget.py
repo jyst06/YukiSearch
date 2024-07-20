@@ -1,9 +1,11 @@
 import sys
 import os
 import shutil
+import webbrowser
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton, QCheckBox,
-                             QMessageBox, QFileDialog, QGroupBox, QFormLayout, QHBoxLayout)
+                             QMessageBox, QFileDialog, QGroupBox, QFormLayout)
 from PyQt6.QtCore import Qt
+import requests
 
 from src.datamanager.utils import read_settings, edit_settings
 
@@ -34,7 +36,7 @@ class SettingWidget(QWidget):
         windows_layout = QFormLayout()
 
         self.background_checkbox = QCheckBox("關閉後留在背景")
-        self.background_checkbox.setChecked(read_settings()["minimize_window"])
+        self.background_checkbox.setChecked(read_settings().get("minimize_window", False))
         self.background_checkbox.stateChanged.connect(lambda: edit_settings("minimize_window", self.background_checkbox.isChecked()))
         windows_layout.addRow(self.background_checkbox)
 
@@ -79,9 +81,22 @@ class SettingWidget(QWidget):
         import_group.setLayout(import_layout)
         main_layout.addWidget(import_group)
 
+        # 其他選項區塊
+        other_group = QGroupBox("其他")
+        other_layout = QVBoxLayout()
+
+        github_button = QPushButton("前往 GitHub")
+        github_button.setFixedHeight(50)
+        github_button.setFixedWidth(200)
+        github_button.clicked.connect(self.open_github)
+        other_layout.addWidget(github_button)
+
+        other_group.setLayout(other_layout)
+        main_layout.addWidget(other_group)
+
         self.setLayout(main_layout)
         self.setWindowTitle("設定")
-        self.setGeometry(100, 100, 550, 400)  # 設定窗口大小和位置
+        self.setGeometry(100, 100, 550, 450)
 
     def export_bookmarks(self):
         folder_path = QFileDialog.getExistingDirectory(self, "選擇儲存資料夾")
@@ -134,6 +149,9 @@ class SettingWidget(QWidget):
                     QMessageBox.critical(self, "錯誤", f"導入紀錄失敗: {e}")
             else:
                 QMessageBox.warning(self, "錯誤", "檔案名稱不正確，請選擇名為 'history.json' 的檔案。")
+
+    def open_github(self):
+        webbrowser.open("https://github.com/jyst06/YukiSearch")
 
 
 if __name__ == '__main__':
