@@ -57,10 +57,8 @@
 ## 搜尋資料來源
 
 - [巴哈姆特動畫瘋](https://ani.gamer.com.tw/)
-- [囧次元](https://9ciyuan.com/)
-- [Anime1](https://anime1.me/)
-- [櫻花動漫](https://yhdm.one/)
 - [Bangumi番組計劃](https://bangumi.tv/)
+- 其他就不放了...
 
 ---
 
