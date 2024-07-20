@@ -5,5 +5,6 @@ from src.datamanager.history import History
 
 __all__ = [
     "JsonDataManager",
-    "BookMark"
+    "BookMark",
+    "History"
 ]

@@ -29,3 +29,13 @@
 ## 聲明
 
 本軟體僅供學術研究使用，影音內容僅導向相關網站，請支持正版內容。
+
+---
+
+## 搜尋資料來源
+
+- [巴哈姆特動畫瘋](https://ani.gamer.com.tw/)
+- [囧次元](https://9ciyuan.com/)
+- [Anime1](https://anime1.me/)
+- [櫻花動漫](https://yhdm.one/)
+- [Bangumi番組計劃](https://bangumi.tv/)

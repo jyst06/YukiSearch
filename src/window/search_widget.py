@@ -26,9 +26,15 @@ requests_cache.install_cache(CACHE_PATH, backend='sqlite', expire_after=2592000)
 
 class ResultBox(QWidget):
     notification_signal = pyqtSignal(dict)
+    add_history_signal = pyqtSignal(dict)
 
     def __init__(self, image_url, name, source, ani_url):
         super().__init__()
+
+        self.image_url = image_url
+        self.ani_name = name
+        self.source = source
+        self.ani_url = ani_url
 
         self.bookmark = BookMark()
 
@@ -55,10 +61,10 @@ class ResultBox(QWidget):
         # Create buttons layout
         buttons_layout = QHBoxLayout()
         self.favorite_button = QPushButton("收藏")
-        self.favorite_button.clicked.connect(lambda: self.add_bookmark(ani_name=name, source=source,
-                                                                       ani_url=ani_url, image_url=image_url))
+        self.favorite_button.clicked.connect(lambda: self.add_bookmark(ani_name=self.ani_name, source=self.source,
+                                                                       ani_url=self.ani_url, image_url=self.image_url))
         self.watch_button = QPushButton("觀看")
-        self.watch_button.clicked.connect(lambda: self.watch_on_click(ani_url))
+        self.watch_button.clicked.connect(self.watch_on_click)
         buttons_layout.addWidget(self.favorite_button)
         buttons_layout.addWidget(self.watch_button)
 
@@ -112,12 +118,25 @@ class ResultBox(QWidget):
         self.bookmark.add_bookmark(**bookmark)
         self.notification_signal.emit({"title": "提示", "msg": "已加入收藏", "color": "green"})
 
-    def watch_on_click(self, ani_url):
-        webbrowser.open(ani_url)
+    def watch_on_click(self):
+        try:
+            webbrowser.open(self.ani_url)
+
+            data = {
+                "ani_name": self.ani_name,
+                "ani_url": self.ani_url,
+                "source": self.source,
+                "image_url": self.image_url
+            }
+
+            self.add_history_signal.emit(data)
+        except Exception as e:
+            print(f"Error opening URL or emitting signal: {e}")
 
 
 class SearchWidget(QWidget):
     notification_signal = pyqtSignal(dict)
+    add_history_signal = pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()
@@ -220,6 +239,7 @@ class SearchWidget(QWidget):
             for result in results:
                 custom_widget = ResultBox(result["image"], result["name"], result["source"], result["ani_url"])
                 custom_widget.notification_signal.connect(self.notification_signal_receive)
+                custom_widget.add_history_signal.connect(self.add_history_signal_receive)
                 self.result_layout.insertWidget(self.result_layout.count() - 1,
                                                 custom_widget)
         except Exception as e:
@@ -236,6 +256,12 @@ class SearchWidget(QWidget):
 
     def notification_signal_receive(self, notification):
         self.notification_signal.emit(notification)
+
+    def add_history_signal_receive(self, kwargs):
+        try:
+            self.add_history_signal.emit(kwargs)
+        except Exception as e:
+            print(f"Error handling add history signal: {e}")
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from src.window.search_widget import SearchWidget
 from src.window.home_widget import HomeWidget
 from src.window.notification_box_widget import Notification
 from src.window.bookmark_widget import BookMarkWidget
+from src.window.add_history_widget import AddHistoryWidget
 
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -125,11 +126,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.init_signal_slots()
         self.init_side_menu_widgets()
         self.init_stack_widgets()
+        self.connect_signals()
 
+    def connect_signals(self):
         self.home_widget.searchSignal.connect(self.switch_to_search_and_execute)
         self.stackedWidget.currentChanged.connect(self.on_page_changed)
         self.search_widget.notification_signal.connect(self.notification_signal_receive)
+        self.search_widget.add_history_signal.connect(self.show_add_history_from_signal)
         self.bookmark_widget.bookmark_remove_msg_signal.connect(self.notification_signal_receive)
+        self.bookmark_widget.add_history_signal.connect(self.show_add_history_from_signal)
 
     def setup_ui_elements(self):
         self.side_title_text.setText(" ")
@@ -270,6 +275,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.notification_thread.start()
 
     def show_notification_from_signal(self, notification):
+        """
+        :param notification: {"title": str, "msg": str, "color": str, "time": int}
+        """
         try:
             title = notification["title"]
             message = notification["msg"]
@@ -287,6 +295,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.notification_box.show_notification(title, message, font_color=color, duration=duration)
         except Exception as e:
             print(f"Error in show_notification_from_signal: {e}")
+
+    def show_add_history_from_signal(self, kwargs):
+        """
+        :param kwargs:
+            ani_name (str): 動漫名稱
+            source (str): 來源
+            ani_url (str): 動漫 URL
+            image_url (str): 動漫封面圖
+        """
+        add_history_widget = AddHistoryWidget(self, **kwargs)
+        add_history_widget.show()
 
 
 def show_main_window():
