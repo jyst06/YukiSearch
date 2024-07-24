@@ -14,10 +14,10 @@ NA_PIC_PATH = os.path.join(ROOT_PATH, "assets/pics/na.jpg")
 
 
 class Search:
-    def __init__(self, ani_name: str, site_name: str):
+    def __init__(self, search_keyword: str, site_name: str):
         """
-        :param ani_name: 動漫名
-        :param site_name: 網站名 ["ani_gamer", "nineciyuan", "anime1", "sakura"]
+        :param search_keyword: 動漫名
+        :param site_name: 網站名 ["ani_gamer", "nineciyuan", "anime1", "sakura", "myself"]
         """
 
         self.search_apis = read_search_apis()
@@ -43,18 +43,26 @@ class Search:
                 "search_url": self.search_apis["sakura"],
                 "ch_name": "櫻花",
                 "lang": "zh-CN"
+            },
+            "myself": {
+                "search_url": self.search_apis["myself"],
+                "ch_name": "Myself",
+                "lang": "zh-TW"
             }
         }
 
         if site_name not in self.allow_sites:
             raise ValueError('(Search) site_name must be in ["ani_gamer", "nineciyuan", "anime1", "sakura"]')
 
-        if self.allow_sites[site_name]["lang"] == "zh-TW":
-            self.url = self.allow_sites[site_name]["search_url"].format(name=chinese_simplified_to_traditional(ani_name))
+        if self.allow_sites[site_name]["ch_name"] == "Myself":
+            self.url = self.allow_sites[site_name]["search_url"]
+        elif self.allow_sites[site_name]["lang"] == "zh-TW":
+            self.url = self.allow_sites[site_name]["search_url"].format(name=chinese_simplified_to_traditional(search_keyword))
         elif self.allow_sites[site_name]["lang"] == "zh-CN":
-            self.url = self.allow_sites[site_name]["search_url"].format(name=chinese_traditional_to_simplified(ani_name))
+            self.url = self.allow_sites[site_name]["search_url"].format(name=chinese_traditional_to_simplified(search_keyword))
 
         self.headers = generate_user_agent()
+        self.search_keyword = search_keyword
         self.site_name = site_name
         self.site_name_ch = self.allow_sites[site_name]["ch_name"]
         self.template_format = {
@@ -66,7 +74,14 @@ class Search:
         }
 
     def get_html(self) -> str:
-        response = requests.get(self.url, headers=self.headers)
+        if self.site_name == "myself":
+            payload = {
+                'srchtxt': chinese_simplified_to_traditional(self.search_keyword),
+                'searchsubmit': 'yes'
+            }
+            response = requests.post(self.url, headers=self.headers, data=payload)
+        else:
+            response = requests.get(self.url, headers=self.headers)
 
         if response.status_code == 200:
             return response.text
@@ -104,6 +119,7 @@ class Search:
         soup = BeautifulSoup(html, 'html.parser')
         # ------------------------動畫瘋------------------------
         if self.site_name == "ani_gamer":
+            print("search from ani_gamer")
             names = soup.find_all('p', class_='theme-name')
             urls = soup.find_all('a', class_='theme-list-main')
             images = soup.find_all('img', class_='theme-img lazyload')
@@ -120,6 +136,7 @@ class Search:
                 format_template("ani_gamer", index)
         # ------------------------囧次元------------------------
         elif self.site_name == "nineciyuan":
+            print("search from nineciyuan")
             h3 = soup.find_all('h3')
             div = soup.find_all('div', class_="img-wrapper lazyload img-wrapper-pic")
 
@@ -135,6 +152,7 @@ class Search:
                 format_template("nineciyuan", index)
         # ------------------------anime1------------------------
         elif self.site_name == "anime1":
+            print("search from anime1")
             url = soup.find_all('a', rel="category tag")
             name = soup.find_all('a', rel="bookmark")
 
@@ -157,6 +175,7 @@ class Search:
                 format_template("anime1", index)
         # ------------------------櫻花------------------------
         elif self.site_name == "sakura":
+            print("search from sakura")
             a = soup.find_all('a', target='_self')
             img = soup.find_all('img', class_="float-left mr-3")
 
@@ -173,6 +192,21 @@ class Search:
 
             for index in range(len(ani_name)):
                 format_template("sakura", index)
+        # ------------------------Myself------------------------
+        elif self.site_name == "myself":
+            print("search from myself")
+            anime_items = soup.find_all('li', class_='pbw')
+
+            for item in anime_items:
+                a_tag = item.find('h3', class_='xs3').find('a')
+                ani_url.append(a_tag['href'])
+                ani_name.append(a_tag.text.strip())
+
+            if not ani_name:
+                return None
+
+            for index in range(len(ani_name)):
+                format_template("myself", index)
         # ---------------------------------------------------
         return result_dict
 
@@ -190,5 +224,7 @@ if __name__ == '__main__':
     # print(nineciyuan())
     # anime1 = Search("2.5次元", "anime1")
     # print(anime1())
-    sakura = Search("2.5", "sakura")
-    print(sakura())
+    # sakura = Search("2.5", "sakura")
+    # print(sakura())
+    myself = Search("神的", "myself")
+    print(myself())

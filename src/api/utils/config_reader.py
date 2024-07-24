@@ -16,7 +16,8 @@ def read_search_apis() -> dict:
         "ani_gamer": config['SearchApi']['ani_gamer'],
         "nineciyuan": config['SearchApi']['nineciyuan'],
         "anime1": config['SearchApi']['anime1'],
-        "sakura": config['SearchApi']['sakura']
+        "sakura": config['SearchApi']['sakura'],
+        "myself": config['SearchApi']['myself']
     }
 
 
@@ -28,5 +29,6 @@ def read_video_apis() -> dict:
         "ani_gamer": config['VideoApi']['ani_gamer'],
         "nineciyuan": config['VideoApi']['nineciyuan'],
         "anime1": config['VideoApi']['anime1'],
-        "sakura": config['VideoApi']['sakura']
+        "sakura": config['VideoApi']['sakura'],
+        "myself": config['VideoApi']['myself']
     }

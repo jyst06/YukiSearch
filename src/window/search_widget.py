@@ -167,7 +167,7 @@ class SearchWidget(QWidget):
 
         # 下拉選單
         self.site_selector = QComboBox(self)
-        self.site_selector.addItems(["全部", "動畫瘋", "囧次元", "Anime1", "櫻花"])
+        self.site_selector.addItems(["全部", "動畫瘋", "囧次元", "Anime1", "櫻花", "Myself"])
         self.site_selector.setFixedHeight(40)  # 增加高度
         self.site_selector.setFixedWidth(125)
 
@@ -205,11 +205,12 @@ class SearchWidget(QWidget):
 
         selected_site = self.site_selector.currentText()
         sites = {
-            "全部": ["ani_gamer", "nineciyuan", "anime1", "sakura"],
+            "全部": ["ani_gamer", "nineciyuan", "anime1", "sakura", "myself"],
             "動畫瘋": ["ani_gamer"],
             "囧次元": ["nineciyuan"],
             "Anime1": ["anime1"],
-            "櫻花": ["sakura"]
+            "櫻花": ["sakura"],
+            "Myself": ["myself"]
         }
 
         flag = False
