@@ -85,9 +85,10 @@ class NotificationThread(QThread):
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self):
+    def __init__(self, version: str):
         super().__init__()
 
+        self.version = version
         loading_image_path = os.path.join(ROOT_PATH, "assets/pics/img.png")
         self.loading_screen = LoadingScreen(loading_image_path)
         self.loading_screen.show()
@@ -154,7 +155,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowIcon(QIcon(window_icon_path))
 
         self.setupUi(self)
-        self.setWindowTitle("YukiSearch")
+        self.setWindowTitle(f"YukiSearch {self.version}")
         self.resize(1500, 900)
 
         self.setup_ui_elements()
@@ -343,9 +344,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         add_history_widget.show()
 
 
-def show_main_window():
+def show_main_window(version: str):
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow(version)
     sys.exit(app.exec())
 
 

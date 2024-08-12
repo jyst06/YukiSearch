@@ -1,4 +1,5 @@
 import requests
+import requests_cache
 import webbrowser
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from PyQt6.QtCore import QTimer
@@ -12,15 +13,17 @@ def check_latest_release(current_version: str) -> bool:
     if not read_settings().get("show_update_notification", True):
         return False
     try:
-        response = requests.get("https://api.github.com/repos/jyst06/YukiSearch/releases/latest")
-        response.raise_for_status()
-        latest_release = response.json()
-        print(f"Latest Version: {latest_release['tag_name']}")
-        if current_version != latest_release['tag_name']:
-            app = QApplication(sys.argv)
-            show_update_prompt(latest_release["assets"][0]["browser_download_url"])
-        else:
-            return False
+        with requests_cache.disabled():
+            response = requests.get("https://api.github.com/repos/jyst06/YukiSearch/releases/latest")
+            response.raise_for_status()
+            latest_release = response.json()
+            print(f"Latest Version: {latest_release['tag_name']}")
+
+            if current_version != latest_release['tag_name']:
+                app = QApplication(sys.argv)
+                show_update_prompt(latest_release["assets"][0]["browser_download_url"])
+            else:
+                return False
     except Exception as e:
         print(f"Error: {e}")
         return False
@@ -52,5 +55,5 @@ def show_update_prompt(url=None):
 
 
 if __name__ == "__main__":
-    current_version = "1.0.0"
+    current_version = "1.1.0"
     check_latest_release(current_version)
