@@ -52,7 +52,7 @@ class Search:
         }
 
         if site_name not in self.allow_sites:
-            raise ValueError('(Search) site_name must be in ["ani_gamer", "nineciyuan", "anime1", "sakura"]')
+            raise ValueError('(Search) site_name must be in ["ani_gamer", "nineciyuan", "anime1", "sakura", "myself"]')
 
         if self.allow_sites[site_name]["ch_name"] == "Myself":
             self.url = self.allow_sites[site_name]["search_url"]
@@ -74,20 +74,25 @@ class Search:
         }
 
     def get_html(self) -> str:
-        if self.site_name == "myself":
-            payload = {
-                'srchtxt': chinese_simplified_to_traditional(self.search_keyword),
-                'searchsubmit': 'yes'
-            }
-            response = requests.post(self.url, headers=self.headers, data=payload)
-        else:
-            response = requests.get(self.url, headers=self.headers)
+        print(f"Request for {self.site_name}")
+        try:
+            if self.site_name == "myself":
+                print("method => POST")
+                payload = {
+                    'srchtxt': chinese_simplified_to_traditional(self.search_keyword),
+                    'searchsubmit': 'yes'
+                }
+                response = requests.post(self.url, headers=self.headers, data=payload, timeout=1.5)
+            else:
+                print("method => GET")
+                response = requests.get(self.url, headers=self.headers, timeout=1.5)
 
-        if response.status_code == 200:
+            response.raise_for_status()
             return response.text
 
-        else:
-            raise Exception(f"Error: {response.status_code}")
+        except requests.RequestException as e:
+            print(f"Request error: {e}")
+            return ""
 
     def parse_html(self, html) -> dict | None:
         # ------------------------內部function------------------------
@@ -96,118 +101,134 @@ class Search:
             return cleaned_text.strip()
 
         def format_template(site_name, index) -> None:
-            self.template_format["id"] = generate_id(ani_name[index] + self.site_name_ch)  # 生成id
-            self.template_format["ani_name"] = ani_name[index]
+            try:
+                self.template_format["id"] = generate_id(ani_name[index] + self.site_name_ch)  # 生成id
+                self.template_format["ani_name"] = ani_name[index]
 
-            if image_url and "down" not in image_url:  # 圖片沒有連結/或是存在download關鍵字 -> 使用N/A圖片
-                self.template_format["image_url"] = image_url[index]
-            else:
-                self.template_format["image_url"] = NA_PIC_PATH
+                if image_url and "down" not in image_url:  # 圖片沒有連結/或是存在download關鍵字 -> 使用N/A圖片
+                    self.template_format["image_url"] = image_url[index]
+                else:
+                    self.template_format["image_url"] = NA_PIC_PATH
 
-            if self.video_apis[site_name]:  # 沒有影片api -> 直接使用連結
-                self.template_format["ani_url"] = self.video_apis[site_name].format(url=ani_url[index])
-            else:
-                self.template_format["ani_url"] = ani_url[index]
+                if self.video_apis[site_name]:  # 沒有影片api -> 直接使用連結
+                    self.template_format["ani_url"] = self.video_apis[site_name].format(url=ani_url[index])
+                else:
+                    self.template_format["ani_url"] = ani_url[index]
 
-            result_dict[index] = self.template_format.copy()
+                result_dict[index] = self.template_format.copy()
+            except IndexError as e:
+                print(f"Index error: {e}")
+            except Exception as e:
+                print(f"Unexpected error: {e}")
+
         # ------------------------初始化------------------------
         result_dict = {}
         ani_url = []
         ani_name = []
         image_url = []
 
-        soup = BeautifulSoup(html, 'html.parser')
-        # ------------------------動畫瘋------------------------
-        if self.site_name == "ani_gamer":
-            print("search from ani_gamer")
-            names = soup.find_all('p', class_='theme-name')
-            urls = soup.find_all('a', class_='theme-list-main')
-            images = soup.find_all('img', class_='theme-img lazyload')
+        try:
+            soup = BeautifulSoup(html, 'html.parser')
 
-            for name, url, img in zip(names, urls, images):
-                ani_name.append(name.text.strip())
-                ani_url.append(url['href'])
-                image_url.append(img['data-src'])
+            # ------------------------動畫瘋------------------------
+            if self.site_name == "ani_gamer":
+                print("search from ani_gamer")
+                names = soup.find_all('p', class_='theme-name')
+                urls = soup.find_all('a', class_='theme-list-main')
+                images = soup.find_all('img', class_='theme-img lazyload')
 
-            if not ani_name:
-                return None
-
-            for index in range(len(ani_name)):
-                format_template("ani_gamer", index)
-        # ------------------------囧次元------------------------
-        elif self.site_name == "nineciyuan":
-            print("search from nineciyuan")
-            h3 = soup.find_all('h3')
-            div = soup.find_all('div', class_="img-wrapper lazyload img-wrapper-pic")
-
-            for h3_item, div_item in zip(h3, div):
-                ani_url.append(h3_item.find('a')['href'])
-                ani_name.append(h3_item.find('a')['title'].strip())
-                image_url.append(div_item['data-original'])
-
-            if not ani_name:
-                return None
-
-            for index in range(len(ani_name)):
-                format_template("nineciyuan", index)
-        # ------------------------anime1------------------------
-        elif self.site_name == "anime1":
-            print("search from anime1")
-            url = soup.find_all('a', rel="category tag")
-            name = soup.find_all('a', rel="bookmark")
-
-            for item in url:
-                href = item['href']
-                if href not in ani_url:
-                    ani_url.append(href)
-
-            for item in name:
-                if item.find('time'):
-                    continue
-                n = remove_brackets(item.text)
-                if n not in ani_name:
-                    ani_name.append(n)
-
-            if not ani_name:
-                return None
-
-            for index in range(len(ani_url)):
-                format_template("anime1", index)
-        # ------------------------櫻花------------------------
-        elif self.site_name == "sakura":
-            print("search from sakura")
-            a = soup.find_all('a', target='_self')
-            img = soup.find_all('img', class_="float-left mr-3")
-
-            for url in a:
-                if url['href'] not in ani_url and "vod" in url['href']:
+                for name, url, img in zip(names, urls, images):
+                    ani_name.append(name.text.strip())
                     ani_url.append(url['href'])
+                    image_url.append(img['data-src'])
 
-            for item in img:
-                image_url.append("https://yhdm.one" + item['src'])
-                ani_name.append(item['alt'].strip())
+                if not ani_name:
+                    return None
 
-            if not ani_name:
-                return None
+                for index in range(len(ani_name)):
+                    format_template("ani_gamer", index)
 
-            for index in range(len(ani_name)):
-                format_template("sakura", index)
-        # ------------------------Myself------------------------
-        elif self.site_name == "myself":
-            print("search from myself")
-            anime_items = soup.find_all('li', class_='pbw')
+            # ------------------------囧次元------------------------
+            elif self.site_name == "nineciyuan":
+                print("search from nineciyuan")
+                h3 = soup.find_all('h3')
+                div = soup.find_all('div', class_="img-wrapper lazyload img-wrapper-pic")
 
-            for item in anime_items:
-                a_tag = item.find('h3', class_='xs3').find('a')
-                ani_url.append(a_tag['href'])
-                ani_name.append(a_tag.text.strip())
+                for h3_item, div_item in zip(h3, div):
+                    ani_url.append(h3_item.find('a')['href'])
+                    ani_name.append(h3_item.find('a')['title'].strip())
+                    image_url.append(div_item['data-original'])
 
-            if not ani_name:
-                return None
+                if not ani_name:
+                    return None
 
-            for index in range(len(ani_name)):
-                format_template("myself", index)
-        # ---------------------------------------------------
+                for index in range(len(ani_name)):
+                    format_template("nineciyuan", index)
+
+            # ------------------------anime1------------------------
+            elif self.site_name == "anime1":
+                print("search from anime1")
+                url = soup.find_all('a', rel="category tag")
+                name = soup.find_all('a', rel="bookmark")
+
+                for item in url:
+                    href = item['href']
+                    if href not in ani_url:
+                        ani_url.append(href)
+
+                for item in name:
+                    if item.find('time'):
+                        continue
+                    n = remove_brackets(item.text)
+                    if n not in ani_name:
+                        ani_name.append(n)
+
+                if not ani_name:
+                    return None
+
+                for index in range(len(ani_url)):
+                    format_template("anime1", index)
+
+            # ------------------------櫻花------------------------
+            elif self.site_name == "sakura":
+                print("search from sakura")
+                a = soup.find_all('a', target='_self')
+                img = soup.find_all('img', class_="float-left mr-3")
+
+                for url in a:
+                    if url['href'] not in ani_url and "vod" in url['href']:
+                        ani_url.append(url['href'])
+
+                for item in img:
+                    image_url.append("https://yhdm.one" + item['src'])
+                    ani_name.append(item['alt'].strip())
+
+                if not ani_name:
+                    return None
+
+                for index in range(len(ani_name)):
+                    format_template("sakura", index)
+
+            # ------------------------Myself------------------------
+            elif self.site_name == "myself":
+                print("search from myself")
+                anime_items = soup.find_all('li', class_='pbw')
+
+                for item in anime_items:
+                    a_tag = item.find('h3', class_='xs3').find('a')
+                    ani_url.append(a_tag['href'])
+                    ani_name.append(a_tag.text.strip())
+
+                if not ani_name:
+                    return None
+
+                for index in range(len(ani_name)):
+                    format_template("myself", index)
+
+        except Exception as e:
+            print(f"Parsing error: {e}")
+            return None
+
         return result_dict
 
     def __call__(self) -> dict | None:
@@ -218,13 +239,13 @@ class Search:
 
 
 if __name__ == '__main__':
-    # ani_gamer = Search("青春豬", "ani_gamer")
-    # print(ani_gamer())
-    # nineciyuan = Search("青春豬", "nineciyuan")
-    # print(nineciyuan())
-    # anime1 = Search("2.5次元", "anime1")
-    # print(anime1())
-    # sakura = Search("2.5", "sakura")
-    # print(sakura())
-    myself = Search("神的", "myself")
+    ani_gamer = Search("青春豬", "ani_gamer")
+    print(ani_gamer())
+    nineciyuan = Search("青春豬", "nineciyuan")
+    print(nineciyuan())
+    anime1 = Search("2.5次元", "anime1")
+    print(anime1())
+    sakura = Search("2.5", "sakura")
+    print(sakura())
+    myself = Search("我推", "myself")
     print(myself())
