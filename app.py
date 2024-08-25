@@ -4,7 +4,7 @@ from src.utils import get_writable_path
 import os
 
 
-__version__ = '1.1.3'
+__version__ = '1.1.4'
 
 
 W_ROOT_PATH = get_writable_path()
