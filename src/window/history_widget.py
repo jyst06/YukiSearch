@@ -3,12 +3,14 @@ import webbrowser
 import requests
 import requests_cache
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
-                             QLabel, QPushButton, QScrollArea, QGridLayout)
+                             QLabel, QPushButton, QScrollArea, QGridLayout,
+                             QFormLayout, QSpinBox, QDialogButtonBox, QDialog, QLineEdit)
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QPixmap
 
 from src.datamanager import History
 from src.utils import get_application_root_path, get_writable_path
+from src.datamanager.utils import generate_id
 
 
 W_ROOT_PATH = get_writable_path()
@@ -123,8 +125,14 @@ class HistoryBox(QWidget):
                 if pixmap.isNull():
                     raise ValueError(f"Error loading local image: {source}")
                 print(f"Loaded local image: {source}")
+
+            elif self.source == "來源 : 囧次元":
+                print("跳過囧次元")
+                pixmap = QPixmap(NA_PIC_PATH)
+                self.image_label.setPixmap(pixmap.scaled(100, 170, Qt.AspectRatioMode.KeepAspectRatio))
+
             else:  # 假設是從網路上讀取的
-                response = requests.get(source)
+                response = requests.get(source, timeout=1.5)
                 response.raise_for_status()
                 image_data = response.content
                 pixmap = QPixmap()
@@ -140,7 +148,10 @@ class HistoryBox(QWidget):
 
     def watch_on_click(self):
         try:
-            webbrowser.open(self.ani_url)
+            if "http" not in self.ani_url:
+                pass
+            else:
+                webbrowser.open(self.ani_url)
 
             data = {
                 "ani_name": self.ani_name,
@@ -159,6 +170,64 @@ class HistoryBox(QWidget):
             self.history_remove_signal.emit(True)
         except Exception as e:
             print(f"Error removing history or emitting signal: {e}")
+
+
+class AddHistoryWidget(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("添加歷史")
+
+        layout = QVBoxLayout()
+
+        form_layout = QFormLayout()
+
+        # 名稱
+        self.name_input = QLineEdit()
+        form_layout.addRow("名稱:", self.name_input)
+
+        # 集數
+        self.episodes_input = QSpinBox()
+        self.episodes_input.setRange(1, 1000)  # 假設集數範圍是1到1000
+        form_layout.addRow("集數:", self.episodes_input)
+
+        # 觀看時間 - 分
+        self.watch_time_minutes_input = QSpinBox()
+        self.watch_time_minutes_input.setRange(0, 59)
+        form_layout.addRow("觀看時間 (分):", self.watch_time_minutes_input)
+
+        # 觀看時間 - 秒
+        self.watch_time_seconds_input = QSpinBox()
+        self.watch_time_seconds_input.setRange(0, 59)
+        form_layout.addRow("觀看時間 (秒):", self.watch_time_seconds_input)
+
+        # 連結
+        self.link_input = QLineEdit()
+        form_layout.addRow("連結:", self.link_input)
+
+        layout.addLayout(form_layout)
+
+        # 按鈕
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+
+        self.setLayout(layout)
+
+    def get_data(self):
+        return {
+            "id": generate_id(self.name_input.text() + "manual"),
+            'source': "manual",
+            "ani_name": self.name_input.text(),
+            "episodes": str(self.episodes_input.value()),
+            "time": f"{self.watch_time_minutes_input.value()}:{self.watch_time_seconds_input.value()}",
+            'ani_url': self.link_input.text(),
+            'image_url': NA_PIC_PATH
+        }
 
 class HistoryWidget(QWidget):
     history_remove_msg_signal = pyqtSignal(dict)
@@ -193,7 +262,17 @@ class HistoryWidget(QWidget):
 
         main_layout = QVBoxLayout()
 
-        # Scroll area for HistoryBoxes
+        top_bar_layout = QHBoxLayout()
+        top_bar_layout.setContentsMargins(0, 0, 0, 0)
+        top_bar_layout.addStretch()  # Pushes the button to the right
+
+        add_history_button = QPushButton("添加歷史")
+        add_history_button.setMinimumWidth(100)
+        add_history_button.clicked.connect(self.manual_add_history)
+        top_bar_layout.addWidget(add_history_button)
+
+        main_layout.addLayout(top_bar_layout)
+
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_content = QWidget()
@@ -210,6 +289,13 @@ class HistoryWidget(QWidget):
             self.load_histories()
         except Exception as e:
             print(f"Error loading histories: {e}")
+
+    def manual_add_history(self):
+        add_dialog = AddHistoryWidget()
+        if add_dialog.exec() == QDialog.DialogCode.Accepted:
+            data = add_dialog.get_data()
+            self.history.add_history(**data)
+            self.load_histories()
 
     def load_histories(self):
         """

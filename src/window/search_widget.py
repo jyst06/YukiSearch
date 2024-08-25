@@ -122,7 +122,10 @@ class ResultBox(QWidget):
 
     def watch_on_click(self):
         try:
-            webbrowser.open(self.ani_url)
+            if "http" not in self.ani_url:
+                pass
+            else:
+                webbrowser.open(self.ani_url)
 
             data = {
                 "ani_name": self.ani_name,
@@ -205,7 +208,7 @@ class SearchWidget(QWidget):
 
         selected_site = self.site_selector.currentText()
         sites = {
-            "全部": ["ani_gamer", "nineciyuan", "anime1", "sakura", "myself"],
+            "全部": ["ani_gamer", "anime1", "sakura", "myself"],
             "動畫瘋": ["ani_gamer"],
             "囧次元": ["nineciyuan"],
             "Anime1": ["anime1"],

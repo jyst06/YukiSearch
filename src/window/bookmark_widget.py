@@ -124,8 +124,14 @@ class BookMarkBox(QWidget):
                 if pixmap.isNull():
                     raise ValueError(f"Error loading local image: {source}")
                 print(f"Loaded local image: {source}")
+
+            elif self.source == "來源 : 囧次元":
+                print("跳過囧次元")
+                pixmap = QPixmap(NA_PIC_PATH)
+                self.image_label.setPixmap(pixmap.scaled(100, 170, Qt.AspectRatioMode.KeepAspectRatio))
+
             else:  # 假設是從網路上讀取的
-                response = requests.get(source)
+                response = requests.get(source, timeout=1.5)
                 response.raise_for_status()
                 image_data = response.content
                 pixmap = QPixmap()
@@ -141,7 +147,10 @@ class BookMarkBox(QWidget):
 
     def watch_on_click(self):
         try:
-            webbrowser.open(self.ani_url)
+            if "http" not in self.ani_url:
+                pass
+            else:
+                webbrowser.open(self.ani_url)
 
             data = {
                 "ani_name": self.ani_name,
