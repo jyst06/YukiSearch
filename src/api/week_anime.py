@@ -1,6 +1,7 @@
 import time
 from bs4 import BeautifulSoup
 import requests
+import requests_cache
 from src.api.utils import generate_user_agent
 from src.api.utils import chinese_simplified_to_traditional
 
@@ -13,10 +14,11 @@ class SearchWeekAnime:
 
     def get_html(self):
         try:
-            response = requests.get(self.url, headers=self.headers)
-            response.encoding = 'utf-8'
-            response.raise_for_status()
-            return response.text
+            with requests_cache.disabled():
+                response = requests.get(self.url, headers=self.headers)
+                response.encoding = 'utf-8'
+                response.raise_for_status()
+                return response.text
         except requests.RequestException as e:
             print(f"Error fetching the URL: {e}")
             return None
